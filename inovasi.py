@@ -383,107 +383,196 @@ elif menu == "📊 Lensa Inovasi":
 elif menu == "🏅 Indeks Inovasi":
     st.title("🏅 Penilaian & Indeks Inovasi")
 
-    st.markdown("""
-        <div class="frame">
-            <div class="frame-title"><span class="icon"></span> Analisis & Prediksi Kinerja Inovasi per SKPD</div>
-    """, unsafe_allow_html=True)
+    sub_menu = st.radio(
+        "📂 Pilih Analisis:",
+        ["📈 Prediksi Tren Inovasi", "🎯 Radar Skor Indikator OPD"],
+        horizontal=True
+    )
 
-    # Siapkan data tren inovasi dari SQL
-    df_forecast = data_inovasi.groupby(["tahun", "bentuk", "skpd"]).size().reset_index(name="jumlah_inovasi")
+    # ======================================================
+    # === 1️⃣ SUB-MENU: PREDIKSI TREND INOVASI (FORECAST) ===
+    # ======================================================
+    if sub_menu == "📈 Prediksi Tren Inovasi":
+        st.markdown("""
+            <div class="frame">
+                <div class="frame-title"><span class="icon"></span> Analisis & Prediksi Kinerja Inovasi per SKPD</div>
+        """, unsafe_allow_html=True)
 
-    # --- Filter pilihan user ---
-    col_filter1, col_filter2 = st.columns(2)
+        # Siapkan data tren inovasi dari SQL
+        df_forecast = data_inovasi.groupby(["tahun", "bentuk", "skpd"]).size().reset_index(name="jumlah_inovasi")
 
-    with col_filter1:
-        bentuk_opsi = ["Semua Bentuk Inovasi"] + sorted(df_forecast["bentuk"].dropna().unique().tolist())
-        bentuk_pilihan = st.selectbox("📦 Pilih Bentuk Inovasi", bentuk_opsi)
+        # --- Filter pilihan user ---
+        col_filter1, col_filter2 = st.columns(2)
 
-    with col_filter2:
-        skpd_opsi = sorted(df_forecast["skpd"].dropna().unique().tolist())
-        skpd_pilihan = st.selectbox("🏛️ Pilih OPD / SKPD", skpd_opsi)
+        with col_filter1:
+            bentuk_opsi = ["Semua Bentuk Inovasi"] + sorted(df_forecast["bentuk"].dropna().unique().tolist())
+            bentuk_pilihan = st.selectbox("📦 Pilih Bentuk Inovasi", bentuk_opsi)
 
-    if bentuk_pilihan == "Semua Bentuk Inovasi":
-        df_filtered = (
-            df_forecast[df_forecast["skpd"] == skpd_pilihan]
-            .groupby("tahun", as_index=False)["jumlah_inovasi"]
-            .sum()
-        )
-    else:
-        df_filtered = df_forecast[
-            (df_forecast["bentuk"] == bentuk_pilihan) &
-            (df_forecast["skpd"] == skpd_pilihan)
-        ]
+        with col_filter2:
+            skpd_opsi = sorted(df_forecast["skpd"].dropna().unique().tolist())
+            skpd_pilihan = st.selectbox("🏛️ Pilih OPD / SKPD", skpd_opsi)
 
-    if df_filtered.empty:
-        st.warning("⚠️ Data tidak ditemukan untuk kombinasi filter tersebut.")
-    else:
-        # Pastikan tahun dibulatkan dan dikonversi ke string
-        df_filtered["tahun"] = pd.to_numeric(df_filtered["tahun"], errors="coerce").round(0).astype("Int64")
-        df_filtered["tahun"] = df_filtered["tahun"].astype(str)
-
-        # === Grafik Tren Historis ===
-        st.subheader(f"📊 Jumlah Inovasi ({bentuk_pilihan}) oleh {skpd_pilihan}")
-
-        fig_bar = px.bar(
-            df_filtered, 
-            x="tahun", y="jumlah_inovasi", text="jumlah_inovasi",
-            labels={"tahun": "Tahun", "jumlah_inovasi": "Jumlah Inovasi"},
-            color_discrete_sequence=["#1C4B89"]
-        )
-        fig_bar.update_traces(textposition="outside")
-        fig_bar.update_xaxes(type='category')
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-        # === Forecast Prophet ===
-        st.subheader("📈 Prediksi Jumlah Inovasi (3 Tahun ke Depan)")
-
-        df_prophet = df_filtered.rename(columns={"tahun": "ds", "jumlah_inovasi": "y"})
-        df_prophet["ds"] = pd.to_datetime(df_prophet["ds"], format="%Y")
-
-        # ✅ CEK JUMLAH DATA DULU SEBELUM MODEL FIT
-        if len(df_prophet) < 2:
-            st.warning("⚠️ Data terlalu sedikit untuk melakukan prediksi (minimal 2 tahun data diperlukan).")
+        if bentuk_pilihan == "Semua Bentuk Inovasi":
+            df_filtered = (
+                df_forecast[df_forecast["skpd"] == skpd_pilihan]
+                .groupby("tahun", as_index=False)["jumlah_inovasi"]
+                .sum()
+            )
         else:
-            model = Prophet()
-            model.fit(df_prophet)
+            df_filtered = df_forecast[
+                (df_forecast["bentuk"] == bentuk_pilihan) &
+                (df_forecast["skpd"] == skpd_pilihan)
+            ]
 
-            future = model.make_future_dataframe(periods=3, freq='YE')
-            forecast = model.predict(future)
+        if df_filtered.empty:
+            st.warning("⚠️ Data tidak ditemukan untuk kombinasi filter tersebut.")
+        else:
+            # Pastikan tahun dibulatkan dan dikonversi ke string
+            df_filtered["tahun"] = pd.to_numeric(df_filtered["tahun"], errors="coerce").round(0).astype("Int64")
+            df_filtered["tahun"] = df_filtered["tahun"].astype(str)
 
-            # 🧮 Bulatkan hasil prediksi agar jumlahnya realistis
-            forecast["yhat"] = forecast["yhat"].round().clip(lower=0)
-            forecast["yhat_lower"] = forecast["yhat_lower"].round().clip(lower=0)
-            forecast["yhat_upper"] = forecast["yhat_upper"].round().clip(lower=0)
+            # === Grafik Tren Historis ===
+            st.subheader(f"📊 Jumlah Inovasi ({bentuk_pilihan}) oleh {skpd_pilihan}")
 
-            fig_forecast = plot_plotly(model, forecast)
-            st.plotly_chart(fig_forecast, use_container_width=True)
+            fig_bar = px.bar(
+                df_filtered, 
+                x="tahun", y="jumlah_inovasi", text="jumlah_inovasi",
+                labels={"tahun": "Tahun", "jumlah_inovasi": "Jumlah Inovasi"},
+                color_discrete_sequence=["#1C4B89"]
+            )
+            fig_bar.update_traces(textposition="outside")
+            fig_bar.update_xaxes(type='category')
+            st.plotly_chart(fig_bar, use_container_width=True)
 
-            # === ⬇️ Tambahan keterangan perubahan prediksi (% naik/turun) ===
-            last_actual = df_prophet["y"].iloc[-1]
-            next_year_pred = forecast["yhat"].iloc[-1]
-            change_pct = ((next_year_pred - last_actual) / last_actual) * 100
+            # === Forecast Prophet ===
+            st.subheader("📈 Prediksi Jumlah Inovasi (3 Tahun ke Depan)")
 
-            if change_pct > 0:
-                arah = "peningkatan"
-                emoji = "📈"
-                warna = "green"
+            df_prophet = df_filtered.rename(columns={"tahun": "ds", "jumlah_inovasi": "y"})
+            df_prophet["ds"] = pd.to_datetime(df_prophet["ds"], format="%Y")
+
+            # ✅ CEK JUMLAH DATA DULU SEBELUM MODEL FIT
+            if len(df_prophet) < 2:
+                st.warning("⚠️ Data terlalu sedikit untuk melakukan prediksi (minimal 2 tahun data diperlukan).")
             else:
-                arah = "penurunan"
-                emoji = "📉"
-                warna = "red"
+                model = Prophet()
+                model.fit(df_prophet)
 
-            st.markdown(
-                f"<p style='color:{warna}; font-size:16px; margin-top:10px;'>"
-                f"{emoji} Prediksi menunjukkan <b>{arah}</b> sekitar "
-                f"<b>{abs(change_pct):.2f}%</b> dibanding tahun terakhir "
-                f"untuk inovasi <b>{bentuk_pilihan}</b> oleh <b>{skpd_pilihan}</b>.</p>",
-                unsafe_allow_html=True
+                future = model.make_future_dataframe(periods=3, freq='YE')
+                forecast = model.predict(future)
+
+                # 🧮 Bulatkan hasil prediksi agar jumlahnya realistis
+                forecast["yhat"] = forecast["yhat"].round().clip(lower=0)
+                forecast["yhat_lower"] = forecast["yhat_lower"].round().clip(lower=0)
+                forecast["yhat_upper"] = forecast["yhat_upper"].round().clip(lower=0)
+
+                fig_forecast = plot_plotly(model, forecast)
+                st.plotly_chart(fig_forecast, use_container_width=True)
+
+                # === ⬇️ Tambahan keterangan perubahan prediksi (% naik/turun) ===
+                last_actual = df_prophet["y"].iloc[-1]
+                next_year_pred = forecast["yhat"].iloc[-1]
+                change_pct = ((next_year_pred - last_actual) / last_actual) * 100
+
+                if change_pct > 0:
+                    arah = "peningkatan"
+                    emoji = "📈"
+                    warna = "green"
+                else:
+                    arah = "penurunan"
+                    emoji = "📉"
+                    warna = "red"
+
+                st.markdown(
+                    f"<p style='color:{warna}; font-size:16px; margin-top:10px;'>"
+                    f"{emoji} Prediksi menunjukkan <b>{arah}</b> sekitar "
+                    f"<b>{abs(change_pct):.2f}%</b> dibanding tahun terakhir "
+                    f"untuk inovasi <b>{bentuk_pilihan}</b> oleh <b>{skpd_pilihan}</b>.</p>",
+                    unsafe_allow_html=True
+                )
+
+                st.caption(f"🔮 Prediksi berdasarkan tren historis inovasi {bentuk_pilihan} oleh {skpd_pilihan}.")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ======================================================
+# === 2️⃣ SUB-MENU: RADAR PLOT SKOR INDIKATOR OPD ===
+# ======================================================
+    elif sub_menu == "🎯 Radar Skor Indikator OPD":
+        st.markdown("""
+            <div class="frame">
+                <div class="frame-title"><span class="icon"></span> Perbandingan Skor Indikator antar OPD</div>
+        """, unsafe_allow_html=True)
+
+        # === Ambil data dari database ===
+        query_bobot_inovasis = "SELECT * FROM public.bobot_inovasis;"
+        bobot_inovasis = pd.read_sql(query_bobot_inovasis, engine)
+
+        query_bobot = "SELECT * FROM public.bobots;"
+        bobot = pd.read_sql(query_bobot, engine)
+
+        query_inovasi = """
+            SELECT 
+                i.id AS inovasi_id,
+                i.nama,
+                i.tahun,
+                s.unit_nama AS skpd
+            FROM public.inovasi i
+            LEFT JOIN public.master_skpd s
+                ON i.skpd_kode = s.unit_id::varchar;
+        """
+        inovasi = pd.read_sql(query_inovasi, engine)
+
+        # === Gabungkan data dari ketiga tabel ===
+        df_join = (
+            bobot_inovasis
+            .merge(bobot, on="nomor", how="left")
+            .merge(inovasi, on="inovasi_id", how="left")
+        )
+
+        # Pastikan data numeriknya aman
+        df_join["perhitungan_nilai_bobot"] = pd.to_numeric(df_join["perhitungan_nilai_bobot"], errors="coerce")
+        df_join = df_join.dropna(subset=["perhitungan_nilai_bobot", "indikator", "skpd"])
+
+        # === Filter indikator ===
+        indikator_opsi = sorted(df_join["indikator"].dropna().unique().tolist())
+        indikator_pilihan = st.multiselect(
+            "Pilih indikator untuk dibandingkan:",
+            indikator_opsi,
+            default=indikator_opsi[:5] if len(indikator_opsi) >= 5 else indikator_opsi
+        )
+
+        # === Olah data untuk radar ===
+        df_radar = (
+            df_join[df_join["indikator"].isin(indikator_pilihan)]
+            .groupby(["skpd", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
+            .mean()
+        )
+
+        # === Validasi data ===
+        if df_radar.empty:
+            st.warning("⚠️ Tidak ada data yang cocok dengan pilihan indikator.")
+        else:
+            import plotly.express as px
+
+            fig = px.line_polar(
+                df_radar,
+                r="perhitungan_nilai_bobot",
+                theta="indikator",
+                color="skpd",
+                line_close=True,
+                markers=True,
+                title="Radar Skor Indikator per OPD"
+            )
+            fig.update_traces(fill='toself')
+            fig.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, df_radar["perhitungan_nilai_bobot"].max() * 1.2])
+                )
             )
 
-            st.caption(f"🔮 Prediksi berdasarkan tren historis inovasi {bentuk_pilihan} oleh {skpd_pilihan}.")
+            st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown("</div>", unsafe_allow_html=True)
-
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # ======================
 # 5. AI & REKOMENDASI
