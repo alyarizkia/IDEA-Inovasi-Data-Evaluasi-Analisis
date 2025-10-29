@@ -519,6 +519,89 @@ elif menu == "📊 Lensa Inovasi":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
+# === RADAR PLOT PER INOVASI ===
+        st.markdown("""
+            <div class="frame">
+                <div class="frame-title"><span class="icon"></span> Perbandingan Skor Indikator antar Inovasi</div>
+        """, unsafe_allow_html=True)
+
+        # === Filter indikator & inovasi ===
+        inovasi_opsi = sorted(df_join["nama"].dropna().unique().tolist())
+        indikator_opsi2 = sorted(df_join["indikator"].dropna().unique().tolist())
+
+        # --- STATE untuk menyimpan pilihan ---
+        if "inovasi_pilihan" not in st.session_state:
+            st.session_state["inovasi_pilihan"] = inovasi_opsi[:5] if len(inovasi_opsi) >= 5 else inovasi_opsi
+        if "indikator_pilihan2" not in st.session_state:
+            st.session_state["indikator_pilihan2"] = indikator_opsi2[:5] if len(indikator_opsi2) >= 5 else indikator_opsi2
+
+        col1, col2, col3, col4 = st.columns([1,1,1,1])
+
+        with col1:
+            if st.button("✅ Pilih Semua Inovasi"):
+                st.session_state["inovasi_pilihan"] = inovasi_opsi
+
+        with col2:
+            if st.button("❌ Hapus Semua Inovasi"):
+                st.session_state["inovasi_pilihan"] = []
+
+        with col3:
+            if st.button("✅ Pilih Semua Indikator (Inovasi)"):
+                st.session_state["indikator_pilihan2"] = indikator_opsi2
+
+        with col4:
+            if st.button("❌ Hapus Semua Indikator (Inovasi)"):
+                st.session_state["indikator_pilihan2"] = []
+
+        # --- Multiselects ---
+        inovasi_pilihan = st.multiselect(
+            "💡 Pilih inovasi untuk dibandingkan:",
+            inovasi_opsi,
+            default=st.session_state["inovasi_pilihan"]
+        )
+
+        indikator_pilihan2 = st.multiselect(
+            "📊 Pilih indikator untuk dibandingkan (inovasi):",
+            indikator_opsi2,
+            default=st.session_state["indikator_pilihan2"]
+        )
+
+        # === Olah data untuk radar versi inovasi ===
+        df_radar_inovasi = (
+            df_join[
+                (df_join["indikator"].isin(indikator_pilihan2)) &
+                (df_join["nama"].isin(inovasi_pilihan))
+            ]
+            .groupby(["nama", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
+            .sum()
+        )
+
+        # === Validasi data ===
+        if df_radar_inovasi.empty:
+            st.warning("⚠️ Tidak ada data yang cocok dengan pilihan indikator atau inovasi.")
+        else:
+            import plotly.express as px
+
+            fig2 = px.line_polar(
+                df_radar_inovasi,
+                r="perhitungan_nilai_bobot",
+                theta="indikator",
+                color="nama",
+                line_close=True,
+                markers=True,
+                title="Radar Skor Indikator per Inovasi"
+            )
+            fig2.update_traces(fill='toself')
+            fig2.update_layout(
+                polar=dict(
+                    radialaxis=dict(visible=True, range=[0, df_radar_inovasi["perhitungan_nilai_bobot"].max() * 1.2])
+                )
+            )
+
+            st.plotly_chart(fig2, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
 # ======================
 # 4. SDGs MAPPING
 # ======================
