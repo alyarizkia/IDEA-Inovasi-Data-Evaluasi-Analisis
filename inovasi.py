@@ -443,16 +443,52 @@ elif menu == "📊 Lensa Inovasi":
         df_join = df_join.dropna(subset=["perhitungan_nilai_bobot", "indikator", "skpd"])
 
         # === Filter indikator ===
+        skpd_opsi = sorted(df_join["skpd"].dropna().unique().tolist())
         indikator_opsi = sorted(df_join["indikator"].dropna().unique().tolist())
+
+        # --- STATE untuk menyimpan pilihan ---
+        if "skpd_pilihan" not in st.session_state:
+            st.session_state["skpd_pilihan"] = skpd_opsi[:5] if len(skpd_opsi) >= 5 else skpd_opsi
+        if "indikator_pilihan" not in st.session_state:
+            st.session_state["indikator_pilihan"] = indikator_opsi[:5] if len(indikator_opsi) >= 5 else indikator_opsi
+
+        col1, col2, col3, col4 = st.columns([1,1,1,1])
+
+        with col1:
+            if st.button("✅ Pilih Semua OPD"):
+                st.session_state["skpd_pilihan"] = skpd_opsi
+
+        with col2:
+            if st.button("❌ Hapus Semua OPD"):
+                st.session_state["skpd_pilihan"] = []
+
+        with col3:
+            if st.button("✅ Pilih Semua Indikator"):
+                st.session_state["indikator_pilihan"] = indikator_opsi
+
+        with col4:
+            if st.button("❌ Hapus Semua Indikator"):
+                st.session_state["indikator_pilihan"] = []
+
+        # --- Multiselects ---
+        skpd_pilihan = st.multiselect(
+            "🏛️ Pilih OPD untuk dibandingkan:",
+            skpd_opsi,
+            default=st.session_state["skpd_pilihan"]
+        )
+
         indikator_pilihan = st.multiselect(
-            "Pilih indikator untuk dibandingkan:",
+            "📊 Pilih indikator untuk dibandingkan:",
             indikator_opsi,
-            default=indikator_opsi[:5] if len(indikator_opsi) >= 5 else indikator_opsi
+            default=st.session_state["indikator_pilihan"]
         )
 
         # === Olah data untuk radar ===
         df_radar = (
-            df_join[df_join["indikator"].isin(indikator_pilihan)]
+            df_join[
+                (df_join["indikator"].isin(indikator_pilihan)) &
+                (df_join["skpd"].isin(skpd_pilihan))
+            ]
             .groupby(["skpd", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
             .sum()
         )
