@@ -36,13 +36,13 @@ with open("style.css") as f:
 st.sidebar.image("D:\\magang\\projek akhir\\foto\\logo.svg", caption="IDEA", width=50)
 menu = st.sidebar.radio(
     "Navigasi",
-    ["🏠 Beranda", "📚 Arsip", "📊 Lensa Inovasi", "🏅 Indeks Inovasi", "🤖 Asisten Cerdas", "🌍 Pemetaan SDGs", "📑 Rekap", "⚙️ Pengaturan"],
+    ["🏠 Beranda", "📚 Arsip", "📊 Lensa Inovasi", "🌍 Pemetaan SDGs", "📑 Rekap", "⚙️ Pengaturan"],
     index=0
 )
 
 st.sidebar.markdown("---")
 st.sidebar.image("D:\\magang\\projek akhir\\foto\\ilustrasi-1.png", width="stretch")
-st.sidebar.info("Welcome back 👋 Admin Cakep")
+st.sidebar.info("Welcome back 👋 Admin")
 
 # DATA
 # ====== INOVASI ======
@@ -168,65 +168,6 @@ if menu == "🏠 Beranda":
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # === Tren & Forecast Inovasi Berdasarkan Filter ===
-    st.markdown("""
-        <div class="frame">
-            <div class="frame-title"><span class="icon"></span> Tren & Forecast Jumlah Inovasi Berdasarkan Filter</div>
-    """, unsafe_allow_html=True)
-
-    # Siapkan data tren inovasi
-    df_forecast = data_inovasi.groupby(["tahun", "bentuk", "skpd"]).size().reset_index(name="jumlah_inovasi")
-
-    # --- Dropdown filter ---
-    col_filter1, col_filter2 = st.columns(2)
-
-    with col_filter1:
-        bentuk_opsi = sorted(df_forecast["bentuk"].dropna().unique())
-        bentuk_pilihan = st.selectbox("📦 Pilih Bentuk Inovasi", bentuk_opsi)
-
-    with col_filter2:
-        skpd_opsi = sorted(df_forecast["skpd"].dropna().unique())
-        skpd_pilihan = st.selectbox("🏛️ Pilih OPD / SKPD", skpd_opsi)
-
-    # Filter sesuai pilihan user
-    df_filtered = df_forecast[
-        (df_forecast["bentuk"] == bentuk_pilihan) &
-        (df_forecast["skpd"] == skpd_pilihan)
-    ]
-
-    if df_filtered.empty:
-        st.warning("⚠️ Data tidak ditemukan untuk kombinasi filter tersebut.")
-    else:
-        # ==== Bar Chart ====
-        st.subheader(f"📊 Jumlah Inovasi ({bentuk_pilihan}) oleh {skpd_pilihan}")
-        fig_bar = px.bar(df_filtered, x="tahun", y="jumlah_inovasi", text="jumlah_inovasi",
-                        labels={"tahun": "Tahun", "jumlah_inovasi": "Jumlah Inovasi"},
-                        color_discrete_sequence=["#1C4B89"])
-        fig_bar.update_traces(textposition="outside")
-        st.plotly_chart(fig_bar, use_container_width=True)
-
-        # ==== Forecast Prophet ====
-        st.subheader("📈 Prediksi Jumlah Inovasi (3 Tahun ke Depan)")
-
-        df_prophet = df_filtered.rename(columns={"tahun": "ds", "jumlah_inovasi": "y"})
-        df_prophet["ds"] = pd.to_datetime(df_prophet["ds"], format="%Y")
-
-        # Fit model Prophet
-        model = Prophet()
-        model.fit(df_prophet)
-
-        # Prediksi 3 tahun ke depan
-        future = model.make_future_dataframe(periods=3, freq='Y')
-        forecast = model.predict(future)
-
-        # Plot tren + forecast
-        fig_forecast = plot_plotly(model, forecast)
-        st.plotly_chart(fig_forecast, use_container_width=True)
-
-        st.caption(f"🔮 Prediksi berdasarkan tren historis inovasi {bentuk_pilihan} oleh {skpd_pilihan}.")
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
     col3, col4 = st.columns(2)
 
     with col3:
@@ -346,42 +287,10 @@ elif menu == "📚 Arsip":
             hide_index=True)
 
 # ======================
-# 3. ANALISIS INOVASI
+# 3. LENSA INOVASI
 # ======================
 elif menu == "📊 Lensa Inovasi":
     st.title("📊 Lensa Inovasi")
-
-    sub = st.radio("Pilih Analisis", ["Deskriptif", "Jejaring"])
-
-    if sub == "Deskriptif":
-        st.subheader("Tren Inovasi per Tahun")
-        st.line_chart(data_inovasi.groupby("tahun").size())
-
-        st.subheader("Distribusi per Bidang")
-        st.bar_chart(data_penelitian["bidang"].value_counts())
-
-        st.subheader("Top SKPD Paling Aktif")
-        st.bar_chart(data_inovasi["skpd"].value_counts())
-
-        st.subheader("Top PT Paling Aktif")
-        st.bar_chart(data_inovasi["pt"].value_counts())
-
-    elif sub == "Jejaring":
-        st.subheader("Analisis Jejaring SKPD ↔ PT ↔ Inovasi")
-
-        G = nx.Graph()
-        for _, row in data_inovasi.iterrows():
-            G.add_edge(row["skpd"], row["pt"])
-
-        fig, ax = plt.subplots(figsize=(6, 4))
-        nx.draw(G, with_labels=True, node_color="lightblue", ax=ax, node_size=1000)
-        st.pyplot(fig)
-
-# ======================
-# 4. PENILAIAN & INDEKS
-# ======================
-elif menu == "🏅 Indeks Inovasi":
-    st.title("🏅 Penilaian & Indeks Inovasi")
 
     sub_menu = st.radio(
         "📂 Pilih Analisis:",
@@ -545,7 +454,7 @@ elif menu == "🏅 Indeks Inovasi":
         df_radar = (
             df_join[df_join["indikator"].isin(indikator_pilihan)]
             .groupby(["skpd", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
-            .mean()
+            .sum()
         )
 
         # === Validasi data ===
@@ -575,23 +484,7 @@ elif menu == "🏅 Indeks Inovasi":
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ======================
-# 5. AI & REKOMENDASI
-# ======================
-elif menu == "🤖 Asisten Cerdas":
-    st.title("🤖 Asisten Cerdas")
-
-    query = st.text_input("Cari inovasi/penelitian (NLP search)...")
-    if query:
-        st.write("🔎 Hasil pencarian untuk:", query)
-        st.write(data_penelitian.sample(3))
-
-    st.subheader("💡 Rekomendasi Penelitian untuk SKPD")
-    st.write("Contoh dummy rekomendasi:")
-
-    st.write(data_penelitian.head(5))
-
-# ======================
-# 6. SDGs MAPPING
+# 4. SDGs MAPPING
 # ======================
 elif menu == "🌍 Pemetaan SDGs":
     st.title("🌍 Mapping Inovasi ke SDGs")
@@ -603,7 +496,7 @@ elif menu == "🌍 Pemetaan SDGs":
     st.bar_chart(mapping.set_index("SDG"))
 
 # ======================
-# 7. LAPORAN & EKSPOR
+# 5. LAPORAN & EKSPOR
 # ======================
 elif menu == "📑 Rekap":
     st.title("📑 Laporan & Ekspor")
