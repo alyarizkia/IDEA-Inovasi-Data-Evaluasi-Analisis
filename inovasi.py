@@ -294,17 +294,21 @@ elif menu == "📊 Lensa Inovasi":
 
     sub_menu = st.radio(
         "📂 Pilih Analisis:",
-        ["📈 Prediksi Tren Inovasi", "🎯 Radar Skor Indikator OPD"],
+        [
+            "📈 Analisis & Prediksi Tren Inovasi", 
+            "🎯 Radar Skor Indikator OPD", 
+            "🧠 Korelasi Semantik Bentuk"
+        ],
         horizontal=True
     )
 
     # ======================================================
-    # === 1️⃣ SUB-MENU: PREDIKSI TREND INOVASI (FORECAST) ===
+    # === 1️⃣ SUB-MENU: ANALISIS & PREDIKSI TREN INOVASI (FORECAST) ===
     # ======================================================
-    if sub_menu == "📈 Prediksi Tren Inovasi":
+    if sub_menu == "📈 Analisis & Prediksi Tren Inovasi":
         st.markdown("""
             <div class="frame">
-                <div class="frame-title"><span class="icon"></span> Analisis & Prediksi Kinerja Inovasi per SKPD</div>
+                <div class="frame-title"><span class="icon"></span> Analisis & Prediksi Inovasi</div>
         """, unsafe_allow_html=True)
 
         # Siapkan data tren inovasi dari SQL
@@ -431,32 +435,67 @@ elif menu == "📊 Lensa Inovasi":
         """
         inovasi = pd.read_sql(query_inovasi, engine)
 
-        # === Gabungkan data dari ketiga tabel ===
+        # === Daftar indikator yang relevan ===
+        indikator_target = {
+            16: "Regulasi Inovasi Daerah",
+            17: "Ketersediaan SDM terhadap inovasi daerah",
+            18: "Dukungan anggaran",
+            19: "Bimtek inovasi",
+            20: "Program dan Kegiatan Inovasi Perangkat Daerah dalam RKPD",
+            21: "Keterlibatan aktor inovasi",
+            22: "Pelaksana inovasi daerah",
+            23: "Jejaring inovasi",
+            24: "Sosialisasi Inovasi Daerah",
+            25: "Pedoman teknis",
+            26: "Kemudahan informasi layanan",
+            27: "Kecepatan penciptaan inovasi",
+            28: "Kemudahan proses inovasi yang dihasilkan",
+            29: "Penyelesaian layanan pengaduan",
+            30: "Layanan Terintegrasi",
+            31: "Replikasi",
+            32: "Alat Kerja",
+            33: "Kemanfaatan inovasi",
+            34: "Monitoring dan Evaluasi Inovasi Daerah",
+            35: "Kualitas inovasi daerah"
+        }
+
+        # === Gabung data dari tabel ===
         df_join = (
             bobot_inovasis
             .merge(bobot, on="nomor", how="left")
             .merge(inovasi, on="inovasi_id", how="left")
         )
 
-        # Pastikan data numeriknya aman
+        # === Bersihkan data numerik ===
         df_join["perhitungan_nilai_bobot"] = pd.to_numeric(df_join["perhitungan_nilai_bobot"], errors="coerce")
         df_join = df_join.dropna(subset=["perhitungan_nilai_bobot", "indikator", "skpd"])
 
-        # === Filter indikator ===
+        # === Filter hanya indikator yang sesuai daftar ===
+        df_join = df_join[df_join.apply(lambda row: row["nomor"] in indikator_target and row["indikator"] == indikator_target[row["nomor"]], axis=1)]
+
+        # ==== HITUNG OPSI DARI df_join (harus dipanggil setelah df_join dibuat + difilter) ====
         skpd_opsi = sorted(df_join["skpd"].dropna().unique().tolist())
         indikator_opsi = sorted(df_join["indikator"].dropna().unique().tolist())
 
-        # --- STATE untuk menyimpan pilihan ---
-        if "skpd_pilihan" not in st.session_state:
-            st.session_state["skpd_pilihan"] = skpd_opsi[:5] if len(skpd_opsi) >= 5 else skpd_opsi
-        if "indikator_pilihan" not in st.session_state:
-            st.session_state["indikator_pilihan"] = indikator_opsi[:5] if len(indikator_opsi) >= 5 else indikator_opsi
+        # jika kosong, set list kosong agar code selanjutnya aman
+        if not skpd_opsi:
+            skpd_opsi = []
+        if not indikator_opsi:
+            indikator_opsi = []
 
+        # --- STATE untuk menyimpan pilihan (buat UX tombol select all / clear) ---
+        if "skpd_pilihan" not in st.session_state:
+            st.session_state["skpd_pilihan"] = skpd_opsi[:5] if len(skpd_opsi) >= 5 else skpd_opsi.copy()
+        if "indikator_pilihan" not in st.session_state:
+            st.session_state["indikator_pilihan"] = indikator_opsi[:5] if len(indikator_opsi) >= 5 else indikator_opsi.copy()
+
+        # ===== Tombol select all / clear =====
         col1, col2, col3, col4 = st.columns([1,1,1,1])
 
         with col1:
             if st.button("✅ Pilih Semua OPD"):
-                st.session_state["skpd_pilihan"] = skpd_opsi
+                # pakai copy() supaya session_state bebas dari mutasi list asli
+                st.session_state["skpd_pilihan"] = skpd_opsi.copy()
 
         with col2:
             if st.button("❌ Hapus Semua OPD"):
@@ -464,24 +503,30 @@ elif menu == "📊 Lensa Inovasi":
 
         with col3:
             if st.button("✅ Pilih Semua Indikator"):
-                st.session_state["indikator_pilihan"] = indikator_opsi
+                st.session_state["indikator_pilihan"] = indikator_opsi.copy()
 
         with col4:
             if st.button("❌ Hapus Semua Indikator"):
                 st.session_state["indikator_pilihan"] = []
 
-        # --- Multiselects ---
+        # ===== Multiselects (default sinkron dengan session_state) =====
         skpd_pilihan = st.multiselect(
             "🏛️ Pilih OPD untuk dibandingkan:",
-            skpd_opsi,
-            default=st.session_state["skpd_pilihan"]
+            options=skpd_opsi,
+            default=[x for x in st.session_state["skpd_pilihan"] if x in skpd_opsi]  # only keep valid defaults
         )
 
         indikator_pilihan = st.multiselect(
             "📊 Pilih indikator untuk dibandingkan:",
-            indikator_opsi,
-            default=st.session_state["indikator_pilihan"]
+            options=indikator_opsi,
+            default=[x for x in st.session_state["indikator_pilihan"] if x in indikator_opsi]
         )
+
+        # jika user tidak memilih apapun
+        if not skpd_pilihan:
+            st.info("Pilih minimal 1 OPD. Pakai tombol '✅ Pilih Semua OPD' untuk memilih semua.")
+        if not indikator_pilihan:
+            st.info("Pilih minimal 1 indikator. Pakai tombol '✅ Pilih Semua Indikator' untuk memilih semua.")
 
         # === Olah data untuk radar ===
         df_radar = (
@@ -490,7 +535,7 @@ elif menu == "📊 Lensa Inovasi":
                 (df_join["skpd"].isin(skpd_pilihan))
             ]
             .groupby(["skpd", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
-            .sum()
+            .count()
         )
 
         # === Validasi data ===
@@ -566,6 +611,12 @@ elif menu == "📊 Lensa Inovasi":
             default=st.session_state["indikator_pilihan2"]
         )
 
+        # jika user tidak memilih apapun
+        if not inovasi_pilihan:
+            st.info("Pilih minimal 1 Inovasi. Pakai tombol '✅ Pilih Semua Inovasi' untuk memilih semua.")
+        if not indikator_pilihan2:
+            st.info("Pilih minimal 1 indikator. Pakai tombol '✅ Pilih Semua Indikator (Inovasi)' untuk memilih semua.")
+
         # === Olah data untuk radar versi inovasi ===
         df_radar_inovasi = (
             df_join[
@@ -573,7 +624,7 @@ elif menu == "📊 Lensa Inovasi":
                 (df_join["nama"].isin(inovasi_pilihan))
             ]
             .groupby(["nama", "indikator"], as_index=False)["perhitungan_nilai_bobot"]
-            .sum()
+            .count()
         )
 
         # === Validasi data ===
@@ -599,6 +650,156 @@ elif menu == "📊 Lensa Inovasi":
             )
 
             st.plotly_chart(fig2, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ======================================================
+# === 3️⃣ SUB-MENU: KORELASI SEMANTIK BENTUK INOVASI ===
+# ======================================================
+    elif sub_menu == "🧠 Korelasi Semantik Bentuk":
+        st.markdown("""
+            <div class="frame">
+                <div class="frame-title"><span class="icon"></span> Korelasi Semantik antar Bentuk Inovasi</div>
+                <p>Analisis makna deskripsi <b>manfaat</b> dan <b>hasil</b> antar bentuk inovasi daerah menggunakan <b>IndoBERT</b> untuk embedding semantik, serta <b>TF-IDF</b> untuk visualisasi kata kunci dominan.</p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        # === 1️⃣ Ambil data dari database ===
+        query = """
+            SELECT 
+                i.id,
+                i.nama,
+                i.bentuk,
+                i.manfaat,
+                i.hasil,
+                i.tahun,
+                s.unit_nama AS skpd
+            FROM public.inovasi i
+            LEFT JOIN public.master_skpd s
+                ON i.skpd_kode = s.unit_id::varchar
+            WHERE i.manfaat IS NOT NULL OR i.hasil IS NOT NULL;
+        """
+        df_inovasi = pd.read_sql(query, engine)
+
+        if df_inovasi.empty:
+            st.warning("⚠️ Tidak ada data inovasi yang memiliki deskripsi manfaat atau hasil.")
+        else:
+            # === 2️⃣ Mapping Bentuk agar seragam (hapus angka 1/2/3) ===
+            mapping_bentuk = {
+                "1": "Inovasi tata kelola pemerintahan daerah",
+                "2": "Inovasi pelayanan publik",
+                "3": "Inovasi Daerah lainnya sesuai dengan Urusan Pemerintahan yang menjadi kewenangan Daerah"
+            }
+            df_inovasi["bentuk"] = df_inovasi["bentuk"].astype(str).replace(mapping_bentuk)
+
+            # === 3️⃣ Filter Tahun dan OPD ===
+            tahun_list = sorted(df_inovasi["tahun"].dropna().unique().tolist())
+            opd_list = sorted(df_inovasi["skpd"].dropna().unique().tolist())
+
+            col1, col2 = st.columns(2)
+            selected_tahun = col1.selectbox("📅 Pilih Tahun:", ["Semua"] + tahun_list)
+            selected_opd = col2.selectbox("🏢 Pilih OPD:", ["Semua"] + opd_list)
+
+            # Terapkan filter
+            df_filtered = df_inovasi.copy()
+            if selected_tahun != "Semua":
+                df_filtered = df_filtered[df_filtered["tahun"] == selected_tahun]
+            if selected_opd != "Semua":
+                df_filtered = df_filtered[df_filtered["skpd"] == selected_opd]
+
+            if df_filtered.empty:
+                st.warning("⚠️ Tidak ada data inovasi untuk filter yang dipilih.")
+            else:
+                # === 4️⃣ Gabungkan teks manfaat + hasil ===
+                df_filtered["gabungan"] = (
+                    df_filtered["manfaat"].fillna('') + " " + df_filtered["hasil"].fillna('')
+                )
+
+                # === 5️⃣ Kelompokkan per bentuk inovasi ===
+                df_text = (
+                    df_filtered.groupby("bentuk", as_index=False)["gabungan"]
+                    .apply(lambda x: " ".join(x))
+                )
+
+                # Hapus bentuk yang kosong / null
+                df_text = df_text[df_text["bentuk"].notna() & (df_text["bentuk"] != "")].drop_duplicates(subset=["bentuk"])
+
+                # =========================================================
+                # === 🔹 HEATMAP KORELASI SEMANTIK (IndoBERT) ===
+                # =========================================================
+                st.subheader("🧩 Heatmap Korelasi Semantik antar Bentuk Inovasi (IndoBERT)")
+
+                from sentence_transformers import SentenceTransformer
+                from sklearn.metrics.pairwise import cosine_similarity
+                import seaborn as sns
+                import matplotlib.pyplot as plt
+
+                with st.spinner("🔍 Menghitung embedding semantik dengan IndoBERT..."):
+                    model = SentenceTransformer("indobenchmark/indobert-base-p1")
+                    embeddings = model.encode(df_text["gabungan"].tolist(), show_progress_bar=True)
+
+                sim_matrix = cosine_similarity(embeddings)
+                bentuk_labels = df_text["bentuk"].tolist()
+                sim_df = pd.DataFrame(sim_matrix, index=bentuk_labels, columns=bentuk_labels)
+
+                fig, ax = plt.subplots(figsize=(10, 8))
+                sns.heatmap(sim_df, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.5, ax=ax)
+                plt.title(f"Korelasi Semantik antar Bentuk Inovasi ({selected_tahun if selected_tahun!='Semua' else 'Semua Tahun'})", fontsize=14)
+                st.pyplot(fig)
+
+                # === Top 5 Korelasi Tertinggi (kompatibel) ===
+                st.markdown("### 🔝 5 Pasangan Bentuk Inovasi Paling Mirip (Berdasarkan Semantik)")
+
+                # stack -> reset_index -> set column names
+                sim_pairs = sim_df.stack().reset_index()
+                sim_pairs.columns = ["bentuk_1", "bentuk_2", "similarity"]
+
+                # hapus self-pairs (A,A)
+                sim_pairs = sim_pairs[sim_pairs["bentuk_1"] != sim_pairs["bentuk_2"]]
+
+                # supaya (A,B) dan (B,A) nggak muncul dua kali, keep only one ordering (lexicographic)
+                sim_pairs = sim_pairs[sim_pairs["bentuk_1"] < sim_pairs["bentuk_2"]]
+
+                # urutkan dan ambil top 5
+                top_sim = sim_pairs.sort_values("similarity", ascending=False).head(5).reset_index(drop=True)
+
+                st.dataframe(top_sim)
+
+                st.info("""
+                    💡 **Interpretasi:**
+                    Semakin tinggi nilai similarity (mendekati 1), semakin mirip makna teks *manfaat + hasil* antar bentuk inovasi.
+                    Nilai mendekati 0 berarti kedua bentuk berbeda secara semantik.
+                """)
+
+                # ======================================================
+                # === 🔹 WORDCLOUD BERDASARKAN TF-IDF PER BENTUK ===
+                # ======================================================
+                st.subheader("☁️ WordCloud Kata Dominan per Bentuk Inovasi (TF-IDF)")
+
+                from sklearn.feature_extraction.text import TfidfVectorizer
+                from wordcloud import WordCloud
+
+                vectorizer = TfidfVectorizer(stop_words='indonesian', max_features=1000)
+                tfidf_matrix = vectorizer.fit_transform(df_text["gabungan"])
+                feature_names = vectorizer.get_feature_names_out()
+
+                for i, bentuk in enumerate(df_text["bentuk"]):
+                    st.markdown(f"#### 🌀 {bentuk}")
+                    vector = tfidf_matrix[i].toarray()[0]
+                    tfidf_dict = {feature_names[j]: vector[j] for j in range(len(feature_names)) if vector[j] > 0}
+
+                    if tfidf_dict:
+                        wc = WordCloud(
+                            width=800, height=400, background_color="white",
+                            colormap="viridis", max_words=100
+                        ).generate_from_frequencies(tfidf_dict)
+
+                        fig_wc, ax_wc = plt.subplots(figsize=(8, 4))
+                        ax_wc.imshow(wc, interpolation="bilinear")
+                        ax_wc.axis("off")
+                        st.pyplot(fig_wc)
+                    else:
+                        st.warning(f"Tidak ada kata signifikan untuk bentuk '{bentuk}'.")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
