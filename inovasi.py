@@ -36,7 +36,7 @@ with open("style.css") as f:
 st.sidebar.image("D:\\magang\\projek akhir\\foto\\logo.svg", caption="IDEA", width=50)
 menu = st.sidebar.radio(
     "Navigasi",
-    ["🏠 Beranda", "📚 Arsip", "📊 Lensa Inovasi", "🌍 Pemetaan SDGs", "📑 Rekap", "⚙️ Pengaturan"],
+    ["🏠 Beranda", "📚 Arsip", "📊 Lensa Inovasi", "🌍 Pemetaan SDGs"],
     index=0
 )
 
@@ -733,15 +733,24 @@ elif menu == "📊 Lensa Inovasi":
                 from sklearn.metrics.pairwise import cosine_similarity
                 import seaborn as sns
                 import matplotlib.pyplot as plt
+                import textwrap
 
                 with st.spinner("🔍 Menghitung embedding semantik dengan IndoBERT..."):
                     model = SentenceTransformer("indobenchmark/indobert-base-p1")
                     embeddings = model.encode(df_text["gabungan"].tolist(), show_progress_bar=True)
 
+                # === Hitung similarity matrix ===
                 sim_matrix = cosine_similarity(embeddings)
-                bentuk_labels = df_text["bentuk"].tolist()
-                sim_df = pd.DataFrame(sim_matrix, index=bentuk_labels, columns=bentuk_labels)
 
+                # === Bungkus label panjang biar nggak tumpuk di heatmap ===
+                bentuk_labels_wrapped = [
+                    "\n".join(textwrap.wrap(label, width=40)) for label in df_text["bentuk"].tolist()
+                ]
+
+                # === Bikin DataFrame pakai label yang udah dibungkus ===
+                sim_df = pd.DataFrame(sim_matrix, index=bentuk_labels_wrapped, columns=bentuk_labels_wrapped)
+
+                # === Plot Heatmap ===
                 fig, ax = plt.subplots(figsize=(10, 8))
                 sns.heatmap(sim_df, cmap="coolwarm", annot=True, fmt=".2f", linewidths=0.5, ax=ax)
                 plt.title(f"Korelasi Semantik antar Bentuk Inovasi ({selected_tahun if selected_tahun!='Semua' else 'Semua Tahun'})", fontsize=14)
@@ -772,21 +781,38 @@ elif menu == "📊 Lensa Inovasi":
                 """)
 
                 # ======================================================
-                # === 🔹 WORDCLOUD BERDASARKAN TF-IDF PER BENTUK ===
+                # === 🔹 WORDCLOUD BERDASARKAN TF-IDF PER BENTUK (DENGAN STOPWORDS EXCEL) ===
                 # ======================================================
                 st.subheader("☁️ WordCloud Kata Dominan per Bentuk Inovasi (TF-IDF)")
 
                 from sklearn.feature_extraction.text import TfidfVectorizer
                 from wordcloud import WordCloud
+                import pandas as pd
+                import matplotlib.pyplot as plt
+                import streamlit as st
 
-                vectorizer = TfidfVectorizer(stop_words='indonesian', max_features=1000)
+                # === 1️⃣ Baca Stopwords dari Excel ===
+                stopwords_path = "D:/magang/projek akhir/list_stopwords.csv"
+                stopwords_df = pd.read_csv(stopwords_path)
+
+                stopwords_list = (
+                    stopwords_df.iloc[:, 0]        # ambil kolom pertama
+                    .dropna()                      # hapus baris kosong
+                    .astype(str)                   # ubah ke string
+                    .str.lower()                   # lowercase semua
+                    .tolist()                      # ubah ke list
+                )
+
+                # === 2️⃣ TF-IDF Vectorizer dengan stopwords dari Excel ===
+                vectorizer = TfidfVectorizer(stop_words=stopwords_list, max_features=1000)
                 tfidf_matrix = vectorizer.fit_transform(df_text["gabungan"])
                 feature_names = vectorizer.get_feature_names_out()
 
+                # === 3️⃣ Generate WordCloud untuk tiap kategori bentuk ===
                 for i, bentuk in enumerate(df_text["bentuk"]):
                     st.markdown(f"#### 🌀 {bentuk}")
                     vector = tfidf_matrix[i].toarray()[0]
-                    tfidf_dict = {feature_names[j]: vector[j] for j in range(len(feature_names)) if vector[j] > 0}
+                    tfidf_dict = {feature_names[j]: float(vector[j]) for j in range(len(feature_names)) if vector[j] > 0}
 
                     if tfidf_dict:
                         wc = WordCloud(
@@ -801,26 +827,408 @@ elif menu == "📊 Lensa Inovasi":
                     else:
                         st.warning(f"Tidak ada kata signifikan untuk bentuk '{bentuk}'.")
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
 # ======================
 # 4. SDGs MAPPING
 # ======================
 elif menu == "🌍 Pemetaan SDGs":
     st.title("🌍 Mapping Inovasi ke SDGs")
 
-    mapping = pd.DataFrame({
-        "SDG": ["SDG 3", "SDG 4", "SDG 11"],
-        "Jumlah Inovasi": [10, 15, 8]
-    })
-    st.bar_chart(mapping.set_index("SDG"))
+    sub_menu = st.radio(
+        "📂 Pilih Jenis Pemetaan:",
+        ["🤖 Mapping Otomatis", 
+         "🏛️ Kontribusi OPD terhadap SDGs",
+         "📈 Tren SDGs"],
+        horizontal=True
+    )
+    # ==============================
+    # MAPPING OTOMATIS SDGs
+    # ==============================
+    if sub_menu == "🤖 Mapping Otomatis":
+        st.markdown("### 🤖 Pemetaan Otomatis Inovasi ke SDGs Berdasarkan Teks")
 
-# ======================
-# 5. LAPORAN & EKSPOR
-# ======================
-elif menu == "📑 Rekap":
-    st.title("📑 Laporan & Ekspor")
-    st.write("💾 Fitur export ke CSV/Excel/PDF (coming soon).")
+        import pandas as pd
+        import numpy as np
+        import streamlit as st
+        from sentence_transformers import SentenceTransformer
+        from sklearn.metrics.pairwise import cosine_similarity
+        from sklearn.feature_extraction.text import TfidfVectorizer
+        from wordcloud import WordCloud
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        import plotly.graph_objects as go
+        import plotly.express as px
+        import textwrap
 
-    st.download_button("Download Data Inovasi (CSV)", data_inovasi.to_csv().encode("utf-8"), "inovasi.csv")
-    st.download_button("Download Data Penelitian (CSV)", data_penelitian.to_csv().encode("utf-8"), "penelitian.csv")
+        # === Ambil data dari database ===
+        query = """
+            SELECT 
+                i.id,
+                i.nama,
+                i.bentuk,
+                i.manfaat,
+                i.hasil,
+                i.tahun,
+                s.unit_nama AS skpd
+            FROM public.inovasi i
+            LEFT JOIN public.master_skpd s
+                ON i.skpd_kode = s.unit_id::varchar
+            WHERE i.manfaat IS NOT NULL OR i.hasil IS NOT NULL;
+        """
+        df_inovasi = pd.read_sql(query, engine)
+        df_inovasi.rename(columns={"skpd": "opd"}, inplace=True)
+
+        # === Daftar SDGs dan deskripsi singkatnya ===
+        sdg_deskripsi = {
+            "SDG 1": "No Poverty – mengakhiri kemiskinan dengan mengembangkan strategi pengembangan ekonomi lokal, meningkatkan pendapatan dan membangun ketahanan masyarakat terhadap potensi-potensi bencana",
+            "SDG 2": "Zero Hunger – mengakhiri kelaparan mencapai ketahanan pangan dan meningkatkan gizi dan mendukung pertanian berkelanjutan",
+            "SDG 3": "Good Health and Well-Being – menjamin kehidupan sehat dan mendukung kesejahteraan bagi semua di segala usia",
+            "SDG 4": "Quality Education – menjamin pendidikan yang inklusif dan  setara secara kualitas dan mendukung kesempatan belajar seumur hidup bagi semua",
+            "SDG 5": "Gender Equality – mencapai kesetaraan gender dan pemberdayaan perempuan dan anak perempuan",
+            "SDG 6": "Clean Water and Sanitation – menjamin ketersediaan dan manajemen air dan sanitasi Yang berkelanjutan untuk semua",
+            "SDG 7": "Affordable and Clean Energy – menjamin akses terhadap energi yang terjangkau, dapat diandalkan, berkelanjutan dan modern bagi semua",
+            "SDG 8": "Decent Work and Economic Growth – mendukung pertumbuhan ekonomi yang inklusif dan berkelanjutan, penyerapan tenaga kerja Penuh dan produktif serta pekerjaan yang layak bagi semua",
+            "SDG 9": "Industry, Innovation and Infrastructure – membangun infrastruktur berketahanan mendukung industrialisasi yang inkulsif dan berkelanjutan serta mendorong inovasi",
+            "SDG 10": "Reduced Inequalities – mengurangi ketimpangan atau kesenjangan di dalam dan di antara negara-negara",
+            "SDG 11": "Sustainable Cities and Communities – mewujudkan kota-kota dan permukiman yang inklusif, aman, tangguh dan berkelanjutan",
+            "SDG 12": "Responsible Consumption and Production – menjamin pola produksi dan konsumsi yang berkelanjutan",
+            "SDG 13": "Climate Action – segera mengambil tindakan untuk melawan perubahan iklim dan dampaknya",
+            "SDG 14": "Life Below Water – mengkonservasi dan memanfaatkan secara berkelanjutan sumber data maritim, laut, dan samudera untuk pembangunan yang berkelanjutan",
+            "SDG 15": "Life on Land – melindungi, memulihkan, dan mendukung penggunaan yang bekelanjutan terhadap ekosistem daratan",
+            "SDG 16": "Peace, Justice and Strong Institutions – memperjuangkan masyarakat yang damai dan inklusi dan menyediakan akses terhadap keadilan bagi semua",
+            "SDG 17": "Partnerships for the Goals – menguatkan perangkat implementasi dan merevitalisasi kemitraan global untuk pembangunan yang berkelanjutan."
+        }
+
+        # === Filter tahun dan OPD ===
+        tahun_list = sorted(df_inovasi["tahun"].dropna().unique().tolist())
+        opd_list = sorted(df_inovasi["opd"].dropna().unique().tolist())
+
+        col1, col2 = st.columns(2)
+        selected_tahun = col1.selectbox("📅 Pilih Tahun:", ["Semua"] + tahun_list)
+        selected_opd = col2.selectbox("🏢 Pilih OPD:", ["Semua"] + opd_list)
+
+        df_filtered = df_inovasi.copy()
+        if selected_tahun != "Semua":
+            df_filtered = df_filtered[df_filtered["tahun"] == selected_tahun]
+        if selected_opd != "Semua":
+            df_filtered = df_filtered[df_filtered["opd"] == selected_opd]
+
+        if df_filtered.empty:
+            st.warning("⚠️ Tidak ada data inovasi untuk filter yang dipilih.")
+            st.stop()
+
+        # === Gabungkan teks manfaat + hasil ===
+        df_filtered["gabungan"] = (
+            df_filtered["manfaat"].fillna('') + " " + df_filtered["hasil"].fillna('')
+        )
+
+        # === Encode teks inovasi dan deskripsi SDGs ===
+        with st.spinner("🤖 Menghitung kemiripan teks dengan IndoBERT..."):
+            model = SentenceTransformer("indobenchmark/indobert-base-p1")
+
+            inovasi_embeddings = model.encode(df_filtered["gabungan"].tolist(), show_progress_bar=True)
+            sdg_embeddings = model.encode(list(sdg_deskripsi.values()), show_progress_bar=True)
+
+        # === Hitung cosine similarity ===
+        similarity_matrix = cosine_similarity(inovasi_embeddings, sdg_embeddings)
+
+        # === Tentukan SDG dengan similarity tertinggi untuk setiap inovasi ===
+        best_match_indices = similarity_matrix.argmax(axis=1)
+        df_filtered["SDG_Terkait"] = [
+            list(sdg_deskripsi.keys())[i] for i in best_match_indices
+        ]
+        df_filtered["Nilai_Kemiripan"] = [
+            similarity_matrix[idx, i] for idx, i in enumerate(best_match_indices)
+        ]
+
+        # === Tampilkan hasil ===
+        st.success("✅ Pemetaan otomatis selesai!")
+        st.dataframe(
+            df_filtered[["id", "nama", "opd", "tahun", "SDG_Terkait", "Nilai_Kemiripan"]],
+            hide_index=True
+        )
+
+        # === Visualisasi: Jumlah Inovasi per SDG ===
+        st.subheader("📊 Distribusi Hasil Pemetaan ke SDGs")
+        sdg_counts = df_filtered["SDG_Terkait"].value_counts().reset_index()
+        sdg_counts.columns = ["SDG", "Jumlah Inovasi"]
+
+        fig = px.bar(
+            sdg_counts, 
+            x="SDG", 
+            y="Jumlah Inovasi",
+            text="Jumlah Inovasi",
+            color="SDG",
+            color_discrete_sequence=px.colors.qualitative.Safe,
+            title="Jumlah Inovasi per SDG"
+        )
+        fig.update_traces(textposition="outside")
+        fig.update_layout(xaxis_title="SDG", yaxis_title="Jumlah Inovasi", showlegend=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+    # ==============================
+    # 2️⃣ KONTRIBUSI OPD TERHADAP SDGs
+    # ==============================
+    elif sub_menu == "🏛️ Kontribusi OPD terhadap SDGs":
+        st.markdown("### 🏛️ Analisis Kontribusi OPD terhadap Pencapaian SDGs")
+
+        import plotly.express as px
+        import plotly.graph_objects as go
+        import numpy as np
+        from sentence_transformers import SentenceTransformer
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        # === Daftar SDGs dan deskripsi singkatnya ===
+        sdg_deskripsi = {
+            "SDG 1": "No Poverty – mengakhiri kemiskinan dengan mengembangkan strategi pengembangan ekonomi lokal, meningkatkan pendapatan dan membangun ketahanan masyarakat terhadap potensi-potensi bencana",
+            "SDG 2": "Zero Hunger – mengakhiri kelaparan mencapai ketahanan pangan dan meningkatkan gizi dan mendukung pertanian berkelanjutan",
+            "SDG 3": "Good Health and Well-Being – menjamin kehidupan sehat dan mendukung kesejahteraan bagi semua di segala usia",
+            "SDG 4": "Quality Education – menjamin pendidikan yang inklusif dan  setara secara kualitas dan mendukung kesempatan belajar seumur hidup bagi semua",
+            "SDG 5": "Gender Equality – mencapai kesetaraan gender dan pemberdayaan perempuan dan anak perempuan",
+            "SDG 6": "Clean Water and Sanitation – menjamin ketersediaan dan manajemen air dan sanitasi Yang berkelanjutan untuk semua",
+            "SDG 7": "Affordable and Clean Energy – menjamin akses terhadap energi yang terjangkau, dapat diandalkan, berkelanjutan dan modern bagi semua",
+            "SDG 8": "Decent Work and Economic Growth – mendukung pertumbuhan ekonomi yang inklusif dan berkelanjutan, penyerapan tenaga kerja Penuh dan produktif serta pekerjaan yang layak bagi semua",
+            "SDG 9": "Industry, Innovation and Infrastructure – membangun infrastruktur berketahanan mendukung industrialisasi yang inkulsif dan berkelanjutan serta mendorong inovasi",
+            "SDG 10": "Reduced Inequalities – mengurangi ketimpangan atau kesenjangan di dalam dan di antara negara-negara",
+            "SDG 11": "Sustainable Cities and Communities – mewujudkan kota-kota dan permukiman yang inklusif, aman, tangguh dan berkelanjutan",
+            "SDG 12": "Responsible Consumption and Production – menjamin pola produksi dan konsumsi yang berkelanjutan",
+            "SDG 13": "Climate Action – segera mengambil tindakan untuk melawan perubahan iklim dan dampaknya",
+            "SDG 14": "Life Below Water – mengkonservasi dan memanfaatkan secara berkelanjutan sumber data maritim, laut, dan samudera untuk pembangunan yang berkelanjutan",
+            "SDG 15": "Life on Land – melindungi, memulihkan, dan mendukung penggunaan yang bekelanjutan terhadap ekosistem daratan",
+            "SDG 16": "Peace, Justice and Strong Institutions – memperjuangkan masyarakat yang damai dan inklusi dan menyediakan akses terhadap keadilan bagi semua",
+            "SDG 17": "Partnerships for the Goals – menguatkan perangkat implementasi dan merevitalisasi kemitraan global untuk pembangunan yang berkelanjutan."
+        }
+
+        if "df_mapping" not in st.session_state:
+            with st.spinner("🔄 Belum ada hasil mapping. Menjalankan proses otomatis..."):
+                query = """
+                SELECT 
+                    i.id,
+                    i.nama,
+                    i.manfaat,
+                    i.hasil,
+                    s.unit_nama AS opd
+                FROM public.inovasi i
+                LEFT JOIN public.master_skpd s
+                    ON i.skpd_kode = s.unit_id::varchar
+                WHERE i.manfaat IS NOT NULL OR i.hasil IS NOT NULL;
+            """
+            df_inovasi = pd.read_sql(query, engine)
+            df_inovasi["gabungan"] = df_inovasi["manfaat"].fillna('') + " " + df_inovasi["hasil"].fillna('')
+
+            # Buat embedding dan hitung kesamaan
+            model = SentenceTransformer("indobenchmark/indobert-base-p1")
+            sdg_names = list(sdg_deskripsi.keys())
+            sdg_texts = list(sdg_deskripsi.values())
+            sdg_embeddings = model.encode(sdg_texts)
+            inovasi_embeddings = model.encode(df_inovasi["gabungan"].tolist())
+
+            sim_matrix = cosine_similarity(inovasi_embeddings, sdg_embeddings)
+            best_match_idx = np.argmax(sim_matrix, axis=1)
+
+            df_inovasi["SDG_Terkait"] = [sdg_names[i] for i in best_match_idx]
+            df_inovasi["Skor_Kemiripan"] = [sim_matrix[i, j] for i, j in enumerate(best_match_idx)]
+
+            st.session_state["df_mapping"] = df_inovasi
+            st.success("✅ Mapping otomatis selesai!")
+
+        # === Setelah itu, lanjut analisis kontribusi seperti biasa ===
+        df_mapping = st.session_state["df_mapping"]
+
+        contrib = df_mapping.groupby(["opd", "SDG_Terkait"]).size().reset_index(name="Jumlah_Inovasi")
+
+        st.subheader("🏆 Ranking OPD per SDG")
+        selected_sdg = st.selectbox("🎯 Pilih SDG:", sorted(df_mapping["SDG_Terkait"].unique()))
+        ranking = contrib[contrib["SDG_Terkait"] == selected_sdg].sort_values("Jumlah_Inovasi", ascending=False)
+        st.dataframe(ranking)
+
+        st.subheader(f"📊 Ranking Kontribusi OPD pada {selected_sdg}")
+        fig = px.bar(ranking, x="Jumlah_Inovasi", y="opd", orientation="h",
+                    title=f"Kontribusi OPD terhadap {selected_sdg}",
+                    color="Jumlah_Inovasi", color_continuous_scale="Viridis")
+        st.plotly_chart(fig, use_container_width=True)
+
+        # Radar chart tetap sama
+        st.subheader("🎯 Profil Kontribusi SDGs per OPD")
+        selected_opd = st.selectbox("🏢 Pilih OPD:", sorted(df_mapping["opd"].dropna().unique()))
+        opd_profile = contrib[contrib["opd"] == selected_opd].pivot(index="opd", columns="SDG_Terkait", values="Jumlah_Inovasi").fillna(0)
+        categories = opd_profile.columns.tolist()
+        values = opd_profile.values.flatten().tolist()
+        values += values[:1]
+        fig_radar = go.Figure(data=go.Scatterpolar(r=values, theta=categories + [categories[0]], fill='toself', name=selected_opd))
+        fig_radar.update_layout(polar=dict(radialaxis=dict(visible=True)), showlegend=False,
+                                title=f"Radar Kontribusi {selected_opd} terhadap SDGs")
+        st.plotly_chart(fig_radar, use_container_width=True)
+
+    # ==============================
+    # 3️⃣ TREN SDGs DARI WAKTU KE WAKTU (MANDIRI + WARNA SDG RESMI)
+    # ==============================
+    elif sub_menu == "📈 Tren SDGs":
+        st.markdown("### 📈 Tren Kontribusi Inovasi terhadap SDGs dari Waktu ke Waktu")
+
+        import plotly.express as px
+        import plotly.graph_objects as go
+        import numpy as np
+        import pandas as pd
+        from sentence_transformers import SentenceTransformer
+        from sklearn.metrics.pairwise import cosine_similarity
+
+        # === Warna resmi SDGs (United Nations style) ===
+        sdg_colors = {
+            "SDG 1": "#E5243B",  # No Poverty
+            "SDG 2": "#DDA63A",  # Zero Hunger
+            "SDG 3": "#4C9F38",  # Good Health and Well-Being
+            "SDG 4": "#C5192D",  # Quality Education
+            "SDG 5": "#FF3A21",  # Gender Equality
+            "SDG 6": "#26BDE2",  # Clean Water and Sanitation
+            "SDG 7": "#FCC30B",  # Affordable and Clean Energy
+            "SDG 8": "#A21942",  # Decent Work and Economic Growth
+            "SDG 9": "#FD6925",  # Industry, Innovation and Infrastructure
+            "SDG 10": "#DD1367", # Reduced Inequalities
+            "SDG 11": "#FD9D24", # Sustainable Cities and Communities
+            "SDG 12": "#BF8B2E", # Responsible Consumption and Production
+            "SDG 13": "#3F7E44", # Climate Action
+            "SDG 14": "#0A97D9", # Life Below Water
+            "SDG 15": "#56C02B", # Life on Land
+            "SDG 16": "#00689D", # Peace, Justice and Strong Institutions
+            "SDG 17": "#19486A"  # Partnerships for the Goals
+        }
+
+        # === Daftar SDGs dan deskripsi singkatnya ===
+        sdg_deskripsi = {
+            "SDG 1": "No Poverty – mengakhiri kemiskinan dengan mengembangkan strategi pengembangan ekonomi lokal, meningkatkan pendapatan dan membangun ketahanan masyarakat terhadap potensi-potensi bencana",
+            "SDG 2": "Zero Hunger – mengakhiri kelaparan mencapai ketahanan pangan dan meningkatkan gizi dan mendukung pertanian berkelanjutan",
+            "SDG 3": "Good Health and Well-Being – menjamin kehidupan sehat dan mendukung kesejahteraan bagi semua di segala usia",
+            "SDG 4": "Quality Education – menjamin pendidikan yang inklusif dan  setara secara kualitas dan mendukung kesempatan belajar seumur hidup bagi semua",
+            "SDG 5": "Gender Equality – mencapai kesetaraan gender dan pemberdayaan perempuan dan anak perempuan",
+            "SDG 6": "Clean Water and Sanitation – menjamin ketersediaan dan manajemen air dan sanitasi yang berkelanjutan untuk semua",
+            "SDG 7": "Affordable and Clean Energy – menjamin akses terhadap energi yang terjangkau, dapat diandalkan, berkelanjutan dan modern bagi semua",
+            "SDG 8": "Decent Work and Economic Growth – mendukung pertumbuhan ekonomi yang inklusif dan berkelanjutan, penyerapan tenaga kerja penuh dan produktif serta pekerjaan yang layak bagi semua",
+            "SDG 9": "Industry, Innovation and Infrastructure – membangun infrastruktur berketahanan mendukung industrialisasi yang inklusif dan berkelanjutan serta mendorong inovasi",
+            "SDG 10": "Reduced Inequalities – mengurangi ketimpangan atau kesenjangan di dalam dan di antara negara-negara",
+            "SDG 11": "Sustainable Cities and Communities – mewujudkan kota-kota dan permukiman yang inklusif, aman, tangguh dan berkelanjutan",
+            "SDG 12": "Responsible Consumption and Production – menjamin pola produksi dan konsumsi yang berkelanjutan",
+            "SDG 13": "Climate Action – segera mengambil tindakan untuk melawan perubahan iklim dan dampaknya",
+            "SDG 14": "Life Below Water – mengkonservasi dan memanfaatkan secara berkelanjutan sumber daya maritim, laut, dan samudera untuk pembangunan yang berkelanjutan",
+            "SDG 15": "Life on Land – melindungi, memulihkan, dan mendukung penggunaan yang berkelanjutan terhadap ekosistem daratan",
+            "SDG 16": "Peace, Justice and Strong Institutions – memperjuangkan masyarakat yang damai dan inklusi dan menyediakan akses terhadap keadilan bagi semua",
+            "SDG 17": "Partnerships for the Goals – memperkuat perangkat implementasi dan merevitalisasi kemitraan global untuk pembangunan berkelanjutan"
+        }
+
+        # === Ambil data dari database ===
+        with st.spinner("📥 Mengambil data inovasi dari database..."):
+            query = """
+            SELECT 
+                i.id,
+                i.nama,
+                i.manfaat,
+                i.hasil,
+                i.tahun,
+                s.unit_nama AS opd
+                FROM public.inovasi i
+                LEFT JOIN public.master_skpd s
+                    ON i.skpd_kode = s.unit_id::varchar
+            WHERE i.manfaat IS NOT NULL OR i.hasil IS NOT NULL;
+            """
+            df_inovasi = pd.read_sql(query, engine)
+            df_inovasi["gabungan"] = df_inovasi["manfaat"].fillna('') + " " + df_inovasi["hasil"].fillna('')
+
+        # === Pemetaan ke SDGs (IndoBERT) ===
+        with st.spinner("🤖 Melakukan pemetaan otomatis ke 17 SDGs..."):
+            model = SentenceTransformer("indobenchmark/indobert-base-p1")
+            sdg_names = list(sdg_deskripsi.keys())
+            sdg_texts = list(sdg_deskripsi.values())
+            sdg_embeddings = model.encode(sdg_texts)
+            inovasi_embeddings = model.encode(df_inovasi["gabungan"].tolist())
+
+            sim_matrix = cosine_similarity(inovasi_embeddings, sdg_embeddings)
+            best_match_idx = np.argmax(sim_matrix, axis=1)
+
+            df_inovasi["SDG_Terkait"] = [sdg_names[i] for i in best_match_idx]
+            df_inovasi["Skor_Kemiripan"] = [sim_matrix[i, j] for i, j in enumerate(best_match_idx)]
+
+        st.success("✅ Pemetaan SDGs berhasil dilakukan!")
+
+        # === Analisis Tren ===
+        st.subheader("📊 Jumlah Inovasi per SDG per Tahun")
+
+        tren = df_inovasi.groupby(["tahun", "SDG_Terkait"]).size().reset_index(name="Jumlah_Inovasi")
+
+        fig_line = px.line(
+            tren,
+            x="tahun",
+            y="Jumlah_Inovasi",
+            color="SDG_Terkait",
+            markers=True,
+            title="Tren Jumlah Inovasi berdasarkan SDGs",
+            color_discrete_map=sdg_colors
+        )
+        fig_line.update_layout(legend_title_text="SDG")
+        st.plotly_chart(fig_line, use_container_width=True)
+
+        # === Fokus SDG tertentu ===
+        selected_sdg = st.selectbox("🎯 Pilih SDG untuk analisis mendalam:", sorted(df_inovasi["SDG_Terkait"].unique()))
+        tren_sdg = tren[tren["SDG_Terkait"] == selected_sdg]
+
+        fig_bar = px.bar(
+            tren_sdg,
+            x="tahun",
+            y="Jumlah_Inovasi",
+            title=f"📅 Tren Inovasi untuk {selected_sdg}",
+            color="SDG_Terkait",
+            color_discrete_map=sdg_colors,
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+        # === SDG dengan perubahan signifikan ===
+        st.subheader("📈 SDG dengan Perubahan Signifikan")
+
+        # --- Filter tambahan untuk bagian ini ---
+        col1, col2 = st.columns(2)
+        selected_opd_sig = col1.selectbox("🏢 Pilih OPD (Opsional):", ["Semua"] + sorted(df_inovasi["opd"].dropna().unique().tolist()))
+        selected_tahun_sig = col2.selectbox("📅 Batas Tahun (Opsional):", ["Semua"] + sorted(df_inovasi["tahun"].dropna().unique().tolist()))
+
+        # --- Terapkan filter jika dipilih ---
+        df_sig = tren.copy()
+        if selected_opd_sig != "Semua":
+            df_sig = df_inovasi[df_inovasi["opd"] == selected_opd_sig]
+            df_sig = df_sig.groupby(["tahun", "SDG_Terkait"]).size().reset_index(name="Jumlah_Inovasi")
+
+        if selected_tahun_sig != "Semua":
+            df_sig = df_sig[df_sig["tahun"] <= selected_tahun_sig]
+
+        # --- Hitung perubahan signifikan ---
+        if df_sig.empty:
+            st.warning("⚠️ Tidak ada data untuk filter yang dipilih.")
+        else:
+            perubahan = df_sig.pivot(index="tahun", columns="SDG_Terkait", values="Jumlah_Inovasi").fillna(0)
+            delta = perubahan.diff().fillna(0).sum().sort_values(ascending=False)
+
+            naik_terbanyak = delta.index[0]
+            turun_terbanyak = delta.index[-1]
+
+            st.success(f"📈 SDG dengan peningkatan kontribusi paling signifikan: **{naik_terbanyak}** (+{delta.iloc[0]:.0f} inovasi)")
+            st.error(f"📉 SDG dengan penurunan kontribusi paling signifikan: **{turun_terbanyak}** ({delta.iloc[-1]:.0f} inovasi)")
+
+            st.info("💡 Filter ini memungkinkan kamu melihat perubahan SDGs spesifik untuk OPD atau tahun tertentu.")
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("🚀 SDG dengan Kenaikan Terbesar", naik_terbanyak, f"+{int(delta.max())} inovasi")
+        with col2:
+            st.metric("📉 SDG dengan Penurunan Terbesar", turun_terbanyak, f"{int(delta.min())} inovasi")
+
+        # === Distribusi per tahun ===
+        st.subheader("🗓️ Distribusi SDGs per Tahun")
+        selected_year = st.selectbox("Pilih Tahun:", sorted(df_inovasi["tahun"].dropna().unique()))
+        distribusi = tren[tren["tahun"] == selected_year].sort_values("Jumlah_Inovasi", ascending=False)
+
+        fig_pie = px.pie(
+            distribusi,
+            names="SDG_Terkait",
+            values="Jumlah_Inovasi",
+            title=f"Proporsi Inovasi per SDG di Tahun {selected_year}",
+            color="SDG_Terkait",
+            color_discrete_map=sdg_colors,
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+
