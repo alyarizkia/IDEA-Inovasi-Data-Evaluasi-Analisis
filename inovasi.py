@@ -120,7 +120,7 @@ if menu == "🏠 Beranda":
     st.markdown(f"""
     <div class="hero-container">
         <img src="data:image/jpg;base64,{img_base64}" class="hero-image">
-        <div class="hero-text">Selamat Pagi, Admin Cakep! 👋</div>
+        <div class="hero-text">Selamat Pagi, Admin! 👋</div>
         <div class="card-row">
             <div class="card">
                 <div class="card-title">Jumlah Inovasi</div>
@@ -142,26 +142,68 @@ if menu == "🏠 Beranda":
     </div>
     """, unsafe_allow_html=True)
 
+    # === Deskripsi Program IDEA ===
+    st.markdown("""
+    <div class="program-description">
+        <h3 style="color:#1C4B89;">IDEA</h3>
+        <p style="text-align:justify; font-size:18px;">
+            <b>IDEA (Inovasi, Data, Evaluasi, Analisis)</b> platform analitik terintegrasi yang dikembangkan untuk memantau, mengevaluasi, dan memetakan berbagai inovasi
+            serta penelitian dari perangkat daerah dan lembaga di Kota Surabaya. Sistem ini hadir untuk membantu pengambilan keputusan berbasis data,
+            memperkuat kolaborasi antar perangkat daerah, dan meningkatkan efektivitas program pembangunan.
+        </p>
+        <p style="text-align:justify; font-size:18px;">
+            Melalui IDEA, setiap inovasi dapat dipetakan kontribusinya terhadap <b>Sustainable Development Goals (SDGs)</b>, 
+            dianalisis trennya, serta dibandingkan dengan kinerja sektor lain. 
+            Tujuannya adalah menciptakan tata kelola inovasi yang lebih transparan, terukur, dan berkelanjutan, 
+            untuk mewujudkan Surabaya sebagai kota yang <i>inovatif, adaptif, dan kolaboratif</i>.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
     # Tren & Update
     col1, col2 = st.columns(2)
 
     with col1:
+        # Grafik Tren Inovasi
         st.markdown("""
-            <div class="frame">
-                <div class="frame-title"><span class="icon"></span> Tren Inovasi</div>
-            """, unsafe_allow_html=True)
-        # jumlah inovasi per tahun
-        df_tren = data_inovasi.groupby("tahun").size().reset_index(name="jumlah")
-        st.line_chart(df_tren.set_index("tahun"))
+        <div class="frame">
+            <div class="frame-title"><span class="icon"></span> Grafik Tren Inovasi</div>
+        """, unsafe_allow_html=True)
+
+        # Deskripsi Tren Inovasi
+        st.markdown("""
+            <div class="section-description">
+                <p style="font-size:15px; text-align:justify; color:#444; margin-top:0;">
+                    Visualisasi ini menampilkan pola perkembangan jumlah inovasi dari tahun ke tahun.
+                    Data ini membantu melihat dinamika semangat inovatif di berbagai Perangkat Daerah
+                    dalam menciptakan solusi baru untuk pelayanan publik.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+
+        df_tren_inovasi = data_inovasi.groupby("tahun").size().reset_index(name="jumlah")
+        st.line_chart(df_tren_inovasi.set_index("tahun"))
 
         st.markdown("</div>", unsafe_allow_html=True)
-        
 
     with col2:
+        # Grafik Tren Penelitian
         st.markdown("""
             <div class="frame">
-                <div class="frame-title"><span class="icon"></span> Tren Penelitian</div>
+                <div class="frame-title"><span class="icon"></span> Grafik Tren Penelitian</div>
             """, unsafe_allow_html=True)
+        
+        # Deskripsi Tren Penelitian
+        st.markdown("""
+            <div class="section-description">
+                <p style="font-size:15px; text-align:justify; color:#444; margin-top:0;">
+                    Visualisasi ini menampilkan pola perkembangan penelitian dari tahun ke tahun yang
+                    bertujuan untuk menunjukkan arah pertumbuhan aktivitas riset
+                    dan kontribusi perguruan tinggi terhadap pengembangan kebijakan berbasis data.
+                </p>
+            </div>
+        """, unsafe_allow_html=True)
+        
         # jumlah penelitian per tahun
         df_tren = data_penelitian.groupby("tahun").size().reset_index(name="jumlah")
         st.line_chart(df_tren.set_index("tahun"))
