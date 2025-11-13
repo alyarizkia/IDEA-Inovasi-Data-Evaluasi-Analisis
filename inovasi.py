@@ -242,6 +242,18 @@ if menu == "🏠 Beranda":
             <div class="frame-title"><span class="icon"></span> Distribusi Bentuk Inovasi</div>
     """, unsafe_allow_html=True)
 
+    st.markdown("""
+        <div class="section-description">
+            <p style="font-size:15px; text-align:justify; color:#444; margin-top:0;">
+                Visualisasi ini menampilkan distribusi jenis inovasi yang dikembangkan oleh berbagai Perangkat Daerah. 
+                Klasifikasi bentuk inovasi mencakup <b>Inovasi Pelayanan Publik</b>, 
+                <b>Inovasi Tata Kelola Pemerintahan Daerah</b>, 
+                serta <b>Inovasi Daerah Lainnya yang sesuai dengan urusan pemerintahan yang menjadi kewenangan daerah</b>. 
+                Melalui visualisasi ini, dapat melihat fokus pengembangan inovasi di lingkungan Pemerintah Kota Surabaya.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
     kategori_counts = data_inovasi['bentuk'].value_counts().reset_index()
     kategori_counts.columns = ["Bentuk", "Jumlah"]
 
@@ -263,6 +275,22 @@ if menu == "🏠 Beranda":
     st.markdown("""
         <div class="frame">
             <div class="frame-title"><span class="icon"></span> Distribusi Bidang Penelitian</div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+        <div class="section-description">
+            <h3 style="color:#1C4B89; margin-bottom:4px;">Distribusi Bidang Penelitian</h3>
+            <p style="font-size:15px; text-align:justify; color:#444; margin-top:0;">
+                Visualisasi ini menampilkan sebaran jumlah penelitian berdasarkan bidang kajian strategis daerah. 
+                Bidang-bidang tersebut mencakup <b>Infrastruktur dan Kewilayahan</b>, 
+                <b>Perencanaan dan Evaluasi</b>, 
+                <b>Pemerintahan dan Pembangunan Manusia</b>, 
+                <b>Perekonomian dan Sumber Daya Alam</b>, 
+                <b>Sekretariat</b>, serta <b>Penelitian dan Pengembangan</b>. 
+                Distribusi ini membantu melihat fokus riset yang sedang dikembangkan oleh pemerintah daerah dan mitra akademik, 
+                sekaligus menunjukkan arah prioritas pembangunan berbasis data dan ilmu pengetahuan di Kota Surabaya.
+            </p>
+        </div>
     """, unsafe_allow_html=True)
 
     kategori_counts = data_penelitian['nama_bidang'].value_counts().reset_index()
