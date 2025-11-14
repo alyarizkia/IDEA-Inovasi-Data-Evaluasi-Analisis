@@ -279,7 +279,6 @@ if menu == "🏠 Beranda":
 
     st.markdown("""
         <div class="section-description">
-            <h3 style="color:#1C4B89; margin-bottom:4px;">Distribusi Bidang Penelitian</h3>
             <p style="font-size:15px; text-align:justify; color:#444; margin-top:0;">
                 Visualisasi ini menampilkan sebaran jumlah penelitian berdasarkan bidang kajian strategis daerah. 
                 Bidang-bidang tersebut mencakup <b>Infrastruktur dan Kewilayahan</b>, 
@@ -311,10 +310,20 @@ if menu == "🏠 Beranda":
     st.markdown("</div>", unsafe_allow_html=True)
         
 # ======================
-# 2. DATA MASTER
+# 2. ARSIP
 # ======================
 elif menu == "📚 Arsip":
     st.title("📚 Arsip")
+    
+    st.markdown("""
+    <div style="font-size:16px; text-align:justify; margin-bottom:20px;">
+        Berisi kumpulan data hasil rekapitulasi dari berbagai kategori, 
+        seperti Inovasi Daerah, Penelitian, Organisasi Perangkat Daerah (OPD), serta Perguruan Tinggi. 
+        Data ini dapat digunakan sebagai referensi untuk analisis lanjutan atau dokumentasi administrasi.  
+        Setiap tab di bawah menampilkan data sesuai kategorinya, dan seluruh tabel dapat <b>diekspor</b> 
+        ke format <b>CSV</b> untuk memudahkan pengolahan lebih lanjut atau pelaporan.  
+    </div>
+    """, unsafe_allow_html=True)
 
     tab1, tab2, tab3, tab4 = st.tabs(
         ["Inovasi", "Penelitian", "OPD", "Perguruan Tinggi"]
@@ -362,6 +371,14 @@ elif menu == "📚 Arsip":
 elif menu == "📊 Lensa Inovasi":
     st.title("📊 Lensa Inovasi")
 
+    st.markdown("""
+        <div class="lensa-description">
+        <p style="font-size:18px; text-align:justify">
+            Menyajikan beragam analisis mendalam untuk memahami arah dan 
+                kualitas inovasi daerah dari berbagai perspektif. </p>
+        </div>
+        """, unsafe_allow_html=True)
+
     sub_menu = st.radio(
         "📂 Pilih Analisis:",
         [
@@ -380,6 +397,21 @@ elif menu == "📊 Lensa Inovasi":
             <div class="frame">
                 <div class="frame-title"><span class="icon"></span> Analisis & Prediksi Inovasi</div>
         """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:25px;">
+                Menyajikan gambaran perkembangan jumlah inovasi
+                berdasarkan <i>bentuk inovasi</i> dari setiap <i>Perangkat Daerah</i> dari tahun ke tahun. Grafik Histogram
+                menampilkan proses setiap kombinasi kategori berkembang sehingga memudahkan dalam membaca
+                pola peningkatan, stagnasi, maupun penurunan aktivitas inovasi di setiap Perangkat Daerah.  
+                <br><br>
+                Sistem juga menyediakan <b>proyeksi tren hingga 3 tahun ke depan</b> menggunakan model 
+                peramalan berbasis data historis. Prediksi ini membantu memperkirakan arah dan potensi 
+                pertumbuhan inovasi di masa mendatang, serta dapat menjadi bahan pertimbangan strategis 
+                dalam penyusunan kebijakan dan perencanaan program inovasi daerah.  
+            </div>
+            """, unsafe_allow_html=True)
+
 
         # Siapkan data tren inovasi dari SQL
         df_forecast = data_inovasi.groupby(["tahun", "bentuk", "skpd"]).size().reset_index(name="jumlah_inovasi")
@@ -485,6 +517,19 @@ elif menu == "📊 Lensa Inovasi":
             <div class="frame">
                 <div class="frame-title"><span class="icon"></span> Perbandingan Skor Indikator antar OPD</div>
         """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Menampilkan <b>peta kekuatan indikator inovasi dari setiap Perangkat Daerah</b> melalui radar chart. 
+                Setiap titik mewakili jumlah bobot pada indikator tertentu, sehingga semakin besar nilai pada 
+                suatu sumbu, semakin sering indikator tersebut muncul atau semakin tinggi kontribusinya pada 
+                inovasi OPD tersebut.  
+                <br><br>
+                Visualisasi ini membantu melihat <i>profil karakteristik inovasi</i> setiap OPD, untuk mengetahui indikator yang 
+                kuat, yang lemah, dan pola antar OPD saling berbeda. Cocok banget untuk 
+                membandingkan kesiapan, kapasitas, atau fokus inovasi antar perangkat daerah dalam satu tampilan.
+            </div>
+            """, unsafe_allow_html=True)
 
         # === Ambil data dari database ===
         query_bobot_inovasis = "SELECT * FROM public.bobot_inovasis;"
@@ -640,6 +685,19 @@ elif menu == "📊 Lensa Inovasi":
                 <div class="frame-title"><span class="icon"></span> Perbandingan Skor Indikator antar Inovasi</div>
         """, unsafe_allow_html=True)
 
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Menampilkan <b>perbandingan skor indikator antar inovasi</b>. 
+                Setiap inovasi dibandingkan berdasarkan jumlah bobot pada indikator yang dipilih, sehingga 
+                terlihat inovasi yang unggul pada aspek atau indikator tertentu.  
+                <br><br>
+                Visualisasi ini membantu mengidentifikasi <i>karakter dan kekuatan unik</i> tiap inovasi, 
+                serta mempermudah analisis suatu inovasi memiliki keunggulan spesifik atau justru 
+                membutuhkan peningkatan pada indikator tertentu. Cocok untuk evaluasi performa inovasi 
+                secara individual.
+            </div>
+            """, unsafe_allow_html=True)
+
         # === Filter indikator & inovasi ===
         inovasi_opsi = sorted(df_join["nama"].dropna().unique().tolist())
         indikator_opsi2 = sorted(df_join["indikator"].dropna().unique().tolist())
@@ -730,9 +788,22 @@ elif menu == "📊 Lensa Inovasi":
         st.markdown("""
             <div class="frame">
                 <div class="frame-title"><span class="icon"></span> Korelasi Semantik antar Bentuk Inovasi</div>
-                <p>Analisis makna deskripsi <b>manfaat</b> dan <b>hasil</b> antar bentuk inovasi daerah menggunakan <b>IndoBERT</b> untuk embedding semantik, serta <b>TF-IDF</b> untuk visualisasi kata kunci dominan.</p>
             </div>
         """, unsafe_allow_html=True)
+
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Fitur ini menganalisis seberapa mirip makna kalimat <b>manfaat</b> dan <b>hasil</b> 
+                yang dituliskan pada setiap inovasi, lalu mengelompokkannya berdasarkan tiga 
+                kategori bentuk inovasi: <i>inovasi tata kelola pemerintahan daerah</i>, 
+                <i>inovasi pelayanan publik</i>, dan <i>inovasi daerah lainnya</i>.
+                <br><br>
+                Dengan memanfaatkan <b>IndoBERT</b> untuk memahami kedekatan makna antar teks 
+                (semantic similarity) dan <b>TF-IDF</b> untuk menemukan kata-kata dominan, 
+                fitur ini membantu melihat pola bahasa, tema yang sering muncul, serta 
+                kemiripan karakteristik antar bentuk inovasi.  
+            </div>
+            """, unsafe_allow_html=True)
 
         # === 1️⃣ Ambil data dari database ===
         query = """
