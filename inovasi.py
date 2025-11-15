@@ -974,6 +974,18 @@ elif menu == "📊 Lensa Inovasi":
 elif menu == "🌍 Pemetaan SDGs":
     st.title("🌍 Mapping Inovasi ke SDGs")
 
+    st.markdown("""
+            <div class="lensa-description">
+                <p style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Menyediakan informasi mengenai keterkaitan inovasi 
+                daerah dengan <b>Tujuan Pembangunan Berkelanjutan (SDGs)</b>. 
+                Pemetaan dilakukan untuk membantu memahami kontribusi inovasi 
+                dan perangkat daerah terhadap pencapaian target-target pembangunan. 
+                Bertujuan untuk memberi perspektif yang jelas mengenai arah 
+                pembangunan daerah, serta mendukung proses perencanaan dan evaluasi berbasis data. </p>
+            </div>
+            """, unsafe_allow_html=True)
+
     sub_menu = st.radio(
         "📂 Pilih Jenis Pemetaan:",
         ["🤖 Mapping Otomatis", 
@@ -986,6 +998,15 @@ elif menu == "🌍 Pemetaan SDGs":
     # ==============================
     if sub_menu == "🤖 Mapping Otomatis":
         st.markdown("### 🤖 Pemetaan Otomatis Inovasi ke SDGs Berdasarkan Teks")
+
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Memetakan setiap inovasi daerah secara otomatis ke tujuan Sustainable Development Goals (SDGs) berdasarkan analisis teks. 
+                Melalui pendekatan ini, dapat mengetahui SDG yang paling relevan bagi setiap inovasi serta memahami arah kontribusi inovasi daerah terhadap agenda pembangunan berkelanjutan. 
+                Hasil pemetaan juga disajikan dalam bentuk histogram yang menunjukkan distribusi jumlah inovasi pada tiap SDG, sehingga memudahkan proses evaluasi, pengawasan kinerja, dan perencanaan strategis berbasis data.
+            </div>
+            """, unsafe_allow_html=True)
+
 
         import pandas as pd
         import numpy as np
@@ -1112,6 +1133,15 @@ elif menu == "🌍 Pemetaan SDGs":
     elif sub_menu == "🏛️ Kontribusi OPD terhadap SDGs":
         st.markdown("### 🏛️ Analisis Kontribusi OPD terhadap Pencapaian SDGs")
 
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Fitur ini menyajikan analisis kontribusi setiap Perangkat Daerah terhadap pencapaian tujuan Sustainable Development Goals (SDGs) berdasarkan hasil pemetaan inovasi. 
+                Setiap inovasi yang telah diklasifikasikan secara otomatis ke dalam SDGs kemudian dihitung dan dirangkum untuk menggambarkan tingkat keterlibatan masing-masing OPD pada tiap tujuan pembangunan. 
+                Melalui tampilan peringkat kontribusi OPD untuk setiap SDG, dapat dengan mudah mengidentifikasi unit yang paling aktif, sekaligus melihat kesenjangan kontribusi yang masih perlu diperkuat. 
+                Selain itu, tersedia pula profil kontribusi SDGs untuk setiap OPD yang divisualisasikan dalam bentuk radar chart, sehingga memberikan gambaran menyeluruh mengenai pola fokus dan area prioritas OPD dalam mendukung agenda pembangunan berkelanjutan.
+            </div>
+            """, unsafe_allow_html=True)
+
         import plotly.express as px
         import plotly.graph_objects as go
         import numpy as np
@@ -1205,6 +1235,14 @@ elif menu == "🌍 Pemetaan SDGs":
     # ==============================
     elif sub_menu == "📈 Tren SDGs":
         st.markdown("### 📈 Tren Kontribusi Inovasi terhadap SDGs dari Waktu ke Waktu")
+
+        st.markdown("""
+            <div style="font-size:16px; text-align:justify; margin-top:10px; margin-bottom:22px;">
+                Menu ini menampilkan dinamika kontribusi inovasi terhadap masing-masing tujuan SDGs dari tahun ke tahun melalui serangkaian visualisasi interaktif. 
+                Dapat mengetahui jumlah inovasi pada setiap SDG berkembang secara temporal melalui grafik garis, sehingga memudahkan pemantauan arah kemajuan maupun fluktuasi kontribusi dari waktu ke waktu.
+                Mencakup identifikasi perubahan signifikan pada kontribusi SDGs, baik peningkatan maupun penurunan, sehingga memudahkan deteksi area prioritas yang perlu mendapatkan perhatian lebih. 
+                Terdapat tampilan distribusi inovasi per SDG dalam bentuk pie chart untuk setiap tahun, memberikan gambaran proporsi kontribusi inovasi secara komprehensif terhadap keseluruhan agenda SDGs pada periode waktu yang dipilih.
+            """, unsafe_allow_html=True)
 
         import plotly.express as px
         import plotly.graph_objects as go
@@ -1372,4 +1410,3 @@ elif menu == "🌍 Pemetaan SDGs":
             color_discrete_map=sdg_colors,
         )
         st.plotly_chart(fig_pie, use_container_width=True)
-
