@@ -1854,7 +1854,6 @@ def main_app():
                     st.success("Foto profil berhasil dihapus!")
                     st.rerun()
 
-
         # --- Upload Foto Baru ---
         uploaded = st.file_uploader("Upload Foto Profil", type=["png", "jpg", "jpeg"])
         if uploaded:
