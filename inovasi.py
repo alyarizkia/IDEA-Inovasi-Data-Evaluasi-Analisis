@@ -1552,12 +1552,11 @@ def main_app():
                             i.nama,
                             i.manfaat,
                             i.hasil,
-                            u.tahun AS tahun_usulan,
-                            i.tahun AS tahun_implementasi,
+                            ui.tahun_implementasi,
                             s.unit_nama AS opd
                         FROM public.inovasi i
-                        LEFT JOIN public.usulan_inovasi u
-                            ON i.usulan_kode = u.id
+                        LEFT JOIN public.usulan_inovasis ui
+                            ON ui.id = i.usulan_inovasi_id
                         LEFT JOIN public.master_skpd s
                             ON i.skpd_kode = s.unit_id::varchar
                         WHERE 
