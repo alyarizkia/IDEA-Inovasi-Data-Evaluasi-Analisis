@@ -1,0 +1,14 @@
+numpy
+pandas
+matplotlib
+networkx==3.2.1
+sqlalchemy
+python-dotenv
+altair==4.2.2
+plotly
+Pillow
+scikit-learn
+wordcloud
+sentence-transformers
+seaborn
+streamlit
