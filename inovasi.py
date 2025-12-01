@@ -1265,7 +1265,7 @@ def main_app():
                     import streamlit as st
 
                     # === 1️⃣ Baca Stopwords dari Excel ===
-                    stopwords_path = "D:/magang/projek akhir/list_stopwords.csv"
+                    stopwords_path = "list_stopwords.csv"
                     stopwords_df = pd.read_csv(stopwords_path)
 
                     stopwords_list = (
