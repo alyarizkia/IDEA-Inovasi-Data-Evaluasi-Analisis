@@ -2,6 +2,7 @@ numpy
 pandas
 matplotlib
 networkx==3.2.1
+psycopg2-binary
 sqlalchemy
 python-dotenv
 altair==4.2.2
