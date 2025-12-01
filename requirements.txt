@@ -13,3 +13,4 @@ wordcloud
 sentence-transformers
 seaborn
 streamlit
+beautifulsoup4
