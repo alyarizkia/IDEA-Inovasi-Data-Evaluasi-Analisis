@@ -271,49 +271,58 @@ user = st.session_state["user"]
 def render_top_profile_photo():
     user = st.session_state.get("user", {})
 
-    # Ambil bytes foto user, atau pakai default file kalau None
+    # === Tentukan path default foto (RELATIF, aman di Streamlit Cloud) ===
+    BASE_DIR = os.path.dirname(__file__)
+    DEFAULT_PHOTO_PATH = os.path.join(BASE_DIR, "foto", "default_profile.png")
+
+    # === Ambil foto dari database ===
     photo_value = user.get("photo")
-    if photo_value:
-        try:
-            img_bytes = ensure_bytes(photo_value)  # helper yang sudah kita buat sebelumnya
-        except Exception:
-            # fallback kalau unexpected type
-            img_bytes = None
-    else:
+
+    try:
+        img_bytes = ensure_bytes(photo_value) if photo_value else None
+    except Exception:
         img_bytes = None
 
+    # === Kalau foto user tidak ada → fallback default ===
     if not img_bytes:
-        # baca default image sebagai bytes (pastikan path benar)
-        with open(r"D:/magang/projek akhir/foto/default_profile.png", "rb") as f:
-            img_bytes = f.read()
+        try:
+            with open(DEFAULT_PHOTO_PATH, "rb") as f:
+                img_bytes = f.read()
+        except FileNotFoundError:
+            st.error("⚠️ Default photo tidak ditemukan di folder /foto/default_profile.png")
+            return
 
-    # Sekarang selalu punya bytes — convert ke base64 untuk inline http data URL
+    # === Convert ke base64 (untuk inline img) ===
     img_b64 = base64.b64encode(img_bytes).decode()
-    photo_url = f"data:image/png;base64,{img_b64}"
 
-    st.markdown(f"""
+    # === Render foto di UI ===
+    st.markdown(
+        f"""
         <style>
-        /* Sidebar container */
-        [data-testid="stSidebar"] {{
-            position: relative !important;
-        }}
+            /* Sidebar container */
+            [data-testid="stSidebar"] {{
+                position: relative !important;
+            }}
 
-        /* Foto ngikut sidebar*/
-        .top-profile {{
-            top: 0px;
-            right: calc(100% + 0px); 
-            z-index: 9999;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            border: 3px solid #ddd;
-            object-fit: cover;
-            transition: all 0.25s ease; 
-        }}
+            /* Foto profil melayang */
+            .top-profile {{
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                border: 3px solid #ddd;
+                object-fit: cover;
+                transition: 0.25s ease;
+                z-index: 9999;
+            }}
         </style>
 
         <img class="top-profile" src="data:image/png;base64,{img_b64}">
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
 
 # helper conversion 
 import io
