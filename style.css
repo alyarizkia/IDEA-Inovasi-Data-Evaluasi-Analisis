@@ -2,12 +2,12 @@
 .hero-section {
     position: relative;
     width: 100vw;
-    margin-left: calc(-45vw + 30%);
+    margin-left: calc(-30vw + 30%);
     border-radius: 30px;
     overflow: hidden;
 }
 .hero-section img {
-    width: 90%;
+    width: 80%;
     height: 330px;
     object-fit: cover;
     border-radius: 30px;
