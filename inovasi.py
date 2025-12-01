@@ -386,7 +386,7 @@ def main_app():
         except FileNotFoundError:
             return None
 
-    logo_bytes = load_logo("foto/logo.svg")  # pakai relative path!
+    logo_bytes = load_logo("foto/logo.png")  # pakai relative path!
 
     if logo_bytes:
         st.sidebar.image(logo_bytes, caption="IDEA", width=50)
@@ -435,7 +435,7 @@ def main_app():
 
         # Pakai relative path (WAJIB untuk Streamlit Cloud)
         img_path = "foto/surabaya-1.jpg"
-        logo_path = "foto/logo.svg"
+        logo_path = "foto/logo.png"
 
         img_base64 = load_base64(img_path)
         logo_base64 = load_base64(logo_path)
