@@ -376,39 +376,86 @@ def main_app():
 
     render_top_profile_photo()
 
-    # SIDEBAR
-    st.sidebar.image("D:\\magang\\projek akhir\\foto\\logo.svg", caption="IDEA", width=50)
+    # === SIDEBAR ===
+
+    # Load logo dengan fallback
+    def load_logo(path: str):
+        try:
+            with open(path, "rb") as f:
+                return f.read()
+        except FileNotFoundError:
+            return None
+
+    logo_bytes = load_logo("foto/logo.svg")  # pakai relative path!
+
+    if logo_bytes:
+        st.sidebar.image(logo_bytes, caption="IDEA", width=50)
+    else:
+        st.sidebar.write("⚠️ Logo tidak ditemukan")
+
+    # Navigasi
     menu = st.sidebar.radio(
         "Navigasi",
-        ["🏠 Beranda", "📚 Arsip", "📊 Lensa Inovasi", "🌍 Pemetaan SDGs", "👤 Profile"],
+        [
+            "🏠 Beranda",
+            "📚 Arsip",
+            "📊 Lensa Inovasi",
+            "🌍 Pemetaan SDGs",
+            "👤 Profile"
+        ],
         index=0
     )
 
     if st.session_state.get("logged_in"):
         user = st.session_state["user"]
-        st.sidebar.image("D:\\magang\\projek akhir\\foto\\ilustrasi-1.png", width="stretch")
-        st.sidebar.info(f"Welcome back 👋 {user['fullname']}")
+
+        # pakai relative path (WAJIB kalau deploy)
+        sidebar_img = "foto/ilustrasi-1.png"
+
+        # cek file-nya aman sebelum ditampilkan
+        if os.path.exists(sidebar_img):
+            st.sidebar.image(sidebar_img, use_column_width=True)
+        else:
+            st.sidebar.warning("⚠️ ilustrasi-1.png tidak ditemukan.")
+
+        # greeting user
+        fullname = user.get("fullname", "User")
+        st.sidebar.success(f"Welcome back 👋 {fullname}")
 
     # MAIN DASHBOARD
     if menu == "🏠 Beranda":
         # Hero Section
-        def get_base64_of_bin_file(bin_file):
-            with open(bin_file, "rb") as f:
-                return base64.b64encode(f.read()).decode()
+        # Helper universal untuk baca file sebagai base64
+        def load_base64(path: str):
+            try:
+                with open(path, "rb") as f:
+                    return base64.b64encode(f.read()).decode()
+            except FileNotFoundError:
+                return None
 
-        img_path = "D:/magang/projek akhir/foto/surabaya-1.jpg"
-        img_base64 = get_base64_of_bin_file(img_path)
+        # Pakai relative path (WAJIB untuk Streamlit Cloud)
+        img_path = "foto/surabaya-1.jpg"
+        logo_path = "foto/logo.svg"
 
-        logo_path = "D:\\magang\\projek akhir\\foto\\logo.svg"
-        logo_base64 = get_base64_of_bin_file(logo_path)
+        img_base64 = load_base64(img_path)
+        logo_base64 = load_base64(logo_path)
 
-        # Bagian header sistem (di atas container gambar)
-        st.markdown(f"""
-            <div class="system-header">
-                <img src="data:image/svg+xml;base64,{logo_base64}" alt="logo">
-                <div class="title">IDEA</div>
-            </div>
-        """, unsafe_allow_html=True)
+        # Fallback kalau file gagal dimuat
+        if not img_base64:
+            st.warning("⚠️ Gambar surabaya-1.jpg tidak ditemukan.")
+        if not logo_base64:
+            st.warning("⚠️ Logo tidak ditemukan.")
+
+        # Contoh penggunaan base64 (opsional)
+        if img_base64:
+            st.markdown(
+                f"""
+                <div style='text-align: center;'>
+                    <img src="data:image/jpeg;base64,{img_base64}" width="600">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         # Ambil count langsung dari DataFrame hasil query
         jumlah_inovasi = data_inovasi.shape[0]         
