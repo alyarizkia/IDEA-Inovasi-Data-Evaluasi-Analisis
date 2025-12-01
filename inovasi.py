@@ -1764,6 +1764,10 @@ def main_app():
         user = st.session_state["user"]
         st.subheader(user["fullname"])
 
+        # Ambil folder tempat file inovasi.py berada
+        BASE_DIR = os.path.dirname(__file__)
+        DEFAULT_PHOTO_PATH = os.path.join(BASE_DIR, "foto", "default_profile.png")
+
         # --- Foto Profil ---
         img_bytes = ensure_bytes(user.get("photo"))
 
@@ -1773,7 +1777,10 @@ def main_app():
             if img_bytes:
                 st.image(io.BytesIO(img_bytes), width=150)
             else:
-                st.image("D:/magang/projek akhir/foto/default_profile.png", width=150)
+                # fallback ke default foto
+                with open(DEFAULT_PHOTO_PATH, "rb") as f:
+                    default_img = f.read()
+                st.image(io.BytesIO(default_img), width=150)
 
         with col2:
             # Tombol hapus foto hanya muncul kalau foto ada
