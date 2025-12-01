@@ -364,8 +364,6 @@ def main_app():
     import base64
     import altair as alt
     import plotly.express as px
-    from prophet import Prophet
-    from prophet.plot import plot_plotly
 
     render_top_profile_photo()
 
@@ -754,56 +752,6 @@ def main_app():
                 st.plotly_chart(fig_bar, use_container_width=True)
 
             st.markdown("</div>", unsafe_allow_html=True)
-
-            #     # === Forecast Prophet ===
-            #     st.subheader("📈 Prediksi Jumlah Inovasi (3 Tahun ke Depan)")
-
-            #     df_prophet = df_filtered.rename(columns={"tahun": "ds", "jumlah_inovasi": "y"})
-            #     df_prophet["ds"] = pd.to_datetime(df_prophet["ds"], format="%Y")
-
-            #     # ✅ CEK JUMLAH DATA DULU SEBELUM MODEL FIT
-            #     if len(df_prophet) < 2:
-            #         st.warning("⚠️ Data terlalu sedikit untuk melakukan prediksi (minimal 2 tahun data diperlukan).")
-            #     else:
-            #         model = Prophet()
-            #         model.fit(df_prophet)
-
-            #         future = model.make_future_dataframe(periods=3, freq='YE')
-            #         forecast = model.predict(future)
-
-            #         # 🧮 Bulatkan hasil prediksi agar jumlahnya realistis
-            #         forecast["yhat"] = forecast["yhat"].round().clip(lower=0)
-            #         forecast["yhat_lower"] = forecast["yhat_lower"].round().clip(lower=0)
-            #         forecast["yhat_upper"] = forecast["yhat_upper"].round().clip(lower=0)
-
-            #         fig_forecast = plot_plotly(model, forecast)
-            #         st.plotly_chart(fig_forecast, use_container_width=True)
-
-            #         # === ⬇️ Tambahan keterangan perubahan prediksi (% naik/turun) ===
-            #         last_actual = df_prophet["y"].iloc[-1]
-            #         next_year_pred = forecast["yhat"].iloc[-1]
-            #         change_pct = ((next_year_pred - last_actual) / last_actual) * 100
-
-            #         if change_pct > 0:
-            #             arah = "peningkatan"
-            #             emoji = "📈"
-            #             warna = "green"
-            #         else:
-            #             arah = "penurunan"
-            #             emoji = "📉"
-            #             warna = "red"
-
-            #         st.markdown(
-            #             f"<p style='color:{warna}; font-size:16px; margin-top:10px;'>"
-            #             f"{emoji} Prediksi menunjukkan <b>{arah}</b> sekitar "
-            #             f"<b>{abs(change_pct):.2f}%</b> dibanding tahun terakhir "
-            #             f"untuk inovasi <b>{bentuk_pilihan}</b> oleh <b>{skpd_pilihan}</b>.</p>",
-            #             unsafe_allow_html=True
-            #         )
-
-            #         st.caption(f"🔮 Prediksi berdasarkan tren historis inovasi {bentuk_pilihan} oleh {skpd_pilihan}.")
-
-            # st.markdown("</div>", unsafe_allow_html=True)
 
     # ======================================================
     # === 2️⃣ SUB-MENU: RADAR PLOT SKOR INDIKATOR OPD ===
