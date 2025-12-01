@@ -463,7 +463,6 @@ def main_app():
         <div class="hero-container">
             <img src="data:image/jpg;base64,{img_base64}" class="hero-image">
             <div class="hero-text">Selamat Datang, {nama_user} 👋</div>
-
             <div class="card-row">
                 <div class="card">
                     <div class="card-title">Jumlah Inovasi</div>
