@@ -460,26 +460,27 @@ def main_app():
             nama_user = "Pengunjung"
 
         st.markdown(f"""
-        <div class="hero-container">
-            <img src="data:image/jpg;base64,{img_base64}" class="hero-image">
+        <div class="hero-section">
+            <img src="data:image/jpg;base64,{img_base64}">
             <div class="hero-text">Selamat Datang, {nama_user} 👋</div>
-            <div class="card-row">
-                <div class="card">
-                    <div class="card-title">Jumlah Inovasi</div>
-                    <div class="metric">{jumlah_inovasi}</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Jumlah Penelitian</div>
-                    <div class="metric">{jumlah_penelitian}</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">Perguruan Tinggi Terlibat</div>
-                    <div class="metric">{jumlah_pt}</div>
-                </div>
-                <div class="card">
-                    <div class="card-title">OPD Terlibat</div>
-                    <div class="metric">{jumlah_skpd}</div>
-                </div>
+        </div>
+
+        <div class="card-row">
+            <div class="card">
+                <div class="card-title">Jumlah Inovasi</div>
+                <div class="metric">{jumlah_inovasi}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Jumlah Penelitian</div>
+                <div class="metric">{jumlah_penelitian}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Perguruan Tinggi Terlibat</div>
+                <div class="metric">{jumlah_pt}</div>
+            </div>
+            <div class="card">
+                <div class="card-title">OPD Terlibat</div>
+                <div class="metric">{jumlah_skpd}</div>
             </div>
         </div>
         """, unsafe_allow_html=True)
