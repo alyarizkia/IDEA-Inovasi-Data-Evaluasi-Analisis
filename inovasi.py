@@ -18,7 +18,7 @@ dbname = os.getenv("DB_NAME")
 
 # Buat koneksi engine
 engine = create_engine(
-    f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}"
+    f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode=require"
 )
 
 # === DB USER (SIGN IN / SIGN UP) ===
