@@ -7,7 +7,7 @@
     overflow: hidden;
 }
 .hero-section img {
-    width: 50%;
+    width: 80%;
     height: 330px;
     object-fit: cover;
     border-radius: 30px;
