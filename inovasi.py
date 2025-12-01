@@ -29,7 +29,7 @@ u_port = os.getenv("USER_DB_PORT")
 u_name = os.getenv("USER_DB_NAME")
 
 user_engine = create_engine(
-    f"postgresql+psycopg2://{u_user}:{u_password}@{u_host}:{u_port}/{u_name}"
+    f"postgresql+psycopg2://{u_user}:{u_password}@{u_host}:{u_port}/{u_name}?sslmode=require"
 )
 
 # PAGE CONFIG
