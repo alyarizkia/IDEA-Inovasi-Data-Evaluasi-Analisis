@@ -446,17 +446,6 @@ def main_app():
         if not logo_base64:
             st.warning("⚠️ Logo tidak ditemukan.")
 
-        # Contoh penggunaan base64 (opsional)
-        if img_base64:
-            st.markdown(
-                f"""
-                <div style='text-align: center;'>
-                    <img src="data:image/jpeg;base64,{img_base64}" width="600">
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
         # Ambil count langsung dari DataFrame hasil query
         jumlah_inovasi = data_inovasi.shape[0]         
         jumlah_penelitian = data_penelitian.shape[0]  
@@ -474,6 +463,7 @@ def main_app():
         <div class="hero-container">
             <img src="data:image/jpg;base64,{img_base64}" class="hero-image">
             <div class="hero-text">Selamat Datang, {nama_user} 👋</div>
+
             <div class="card-row">
                 <div class="card">
                     <div class="card-title">Jumlah Inovasi</div>
