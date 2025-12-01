@@ -10,23 +10,22 @@ from sqlalchemy import text
 load_dotenv()  
 
 # === DB INOVASI ===
-user = os.getenv("DB_USER")
-password = os.getenv("DB_PASS")
-host = os.getenv("DB_HOST", "localhost")
-port = os.getenv("DB_PORT", "5432")
-dbname = os.getenv("DB_NAME")
+user = st.secrets["DB_USER"]
+password = st.secrets["DB_PASS"]
+host = st.secrets["DB_HOST"]
+port = st.secrets["DB_PORT"]
+dbname = st.secrets["DB_NAME"]
 
-# Buat koneksi engine
 engine = create_engine(
     f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{dbname}?sslmode=require"
 )
 
 # === DB USER (SIGN IN / SIGN UP) ===
-u_user = os.getenv("USER_DB_USER")
-u_password = os.getenv("USER_DB_PASSWORD")
-u_host = os.getenv("USER_DB_HOST")
-u_port = os.getenv("USER_DB_PORT")
-u_name = os.getenv("USER_DB_NAME")
+u_user = st.secrets["USER_DB_USER"]
+u_password = st.secrets["USER_DB_PASSWORD"]
+u_host = st.secrets["USER_DB_HOST"]
+u_port = st.secrets["USER_DB_PORT"]
+u_name = st.secrets["USER_DB_NAME"]
 
 user_engine = create_engine(
     f"postgresql+psycopg2://{u_user}:{u_password}@{u_host}:{u_port}/{u_name}?sslmode=require"
