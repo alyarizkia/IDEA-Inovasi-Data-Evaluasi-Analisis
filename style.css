@@ -2,7 +2,7 @@
 .hero-section {
     position: relative;
     width: 100vw;
-    margin-left: calc(-25vw + 40%);
+    margin-left: calc(-35vw + 40%);
     border-radius: 30px;
     overflow: hidden;
 }
