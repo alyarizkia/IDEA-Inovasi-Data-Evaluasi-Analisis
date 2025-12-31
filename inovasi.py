@@ -1220,7 +1220,7 @@ def main_app():
                     st.pyplot(fig)
 
                     # === Top 5 Korelasi Tertinggi (kompatibel) ===
-                    st.markdown("### 🔝 5 Pasangan Bentuk Inovasi Paling Mirip (Berdasarkan Semantik)")
+                    st.markdown("### 🔝 Pasangan Bentuk Inovasi Paling Mirip (Berdasarkan Semantik)")
 
                     # stack -> reset_index -> set column names
                     sim_pairs = sim_df.stack().reset_index()
